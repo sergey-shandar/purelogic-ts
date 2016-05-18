@@ -16,6 +16,7 @@ PureLogic for TypeScript
 - Mocha
 - Chai
 - Istanbul
+- [TypeDoc](http://typedoc.io/)
 
 #### Optional
 
