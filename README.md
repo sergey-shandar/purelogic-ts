@@ -26,6 +26,8 @@ PureLogic for TypeScript
 
 Use interfaces instead of classes. For example,
 ```ts
+interface Bag<T> {}
+
 interface DisjointUnion<T> extends Bag<T> {
     a: Bag<T>;
     b: Bag<T>;
