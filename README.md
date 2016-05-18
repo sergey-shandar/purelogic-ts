@@ -24,4 +24,17 @@ PureLogic for TypeScript
 
 ## Development Principals
 
-Use interfaces instead of classes.
+Use interfaces instead of classes. For example,
+```ts
+interface DisjointUnion<T> extends Bag<T> {
+    a: Bag<T>;
+    b: Bag<T>;
+}
+
+function disjointUnion<T>(a: Bag<T>, b: Bag<T>): DisjointUnion<T> {
+    return {
+        a: a,
+        b: b,
+    };
+};
+```
