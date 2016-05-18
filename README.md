@@ -2,16 +2,14 @@
 
 PureLogic for TypeScript
 
-# Tools For Development
+## Tools For Development
 
-## Required
-
-### Stage 1
+### Required. Stage 1
 
 - Node.js
 - TypeScript
 
-### Stage 2
+### Required. Stage 2
 
 - TSNode
 - TSLint
@@ -19,6 +17,6 @@ PureLogic for TypeScript
 - Chai
 - Istanbul
 
-## Optional
+#### Optional
 
 - Visual Studio Code
