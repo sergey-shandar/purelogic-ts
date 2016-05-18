@@ -20,3 +20,7 @@ PureLogic for TypeScript
 #### Optional
 
 - Visual Studio Code
+
+## Development Principals
+
+Use interfaces instead of classes.
