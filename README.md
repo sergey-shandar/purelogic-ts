@@ -6,7 +6,7 @@ PureLogic for TypeScript
 
 ### Required. Stage 1
 
-- Node.js
+- [Node.js](https://nodejs.org/en/) 6.2.0 or higher
 - TypeScript
 
 ### Required. Stage 2
