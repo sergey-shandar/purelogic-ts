@@ -6,8 +6,8 @@ PureLogic for TypeScript
 
 ### Required. Stage 1
 
-- Node.js
-- TypeScript
+- [Node.js](https://nodejs.org/en/) 6.2.0 or higher
+- TypeScript 1.8.10 or higher, `npm install typescript -g`
 
 ### Required. Stage 2
 
