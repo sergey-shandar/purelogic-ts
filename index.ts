@@ -1,10 +1,10 @@
 export interface Visitor<T, R> {
-    flatten<I>(input: Bag<I>, func: (value: I) => [T]): R;
+    flatten<I>(input: Bag<I>, func: (value: I) => T[]): R;
     disjointUnion(a: Bag<T>, b: Bag<T>): R;
     one(value: T): R;
     input(): R;
     groupBy<K>(input: Bag<T>, toKey: (value: T) => K, reduce: (a: T, b: T) => T): R;
-    product<A, B>(a: Bag<A>, b: Bag<B>, func: (a: A, b: B) => [T]): R;
+    product<A, B>(a: Bag<A>, b: Bag<B>, func: (a: A, b: B) => T[]): R;
 }
 
 export interface Accept<T> {
@@ -14,12 +14,13 @@ export interface Accept<T> {
 export interface Bag<T> { 
     accept: Accept<T>;
     
-    flatten<O>(func: (value: T) => [O]): Bag<O>;
+    flatten<O>(func: (value: T) => O[]): Bag<O>;
     disjointUnion(b: Bag<T>): Bag<T>;
     groupBy<K>(toKey: (value: T) => K, reduce: (a: T, b: T) => T): Bag<T>;
-    product<B, O>(b: Bag<B>, func: (a: T, b: B) => [O]): Bag<O>;
+    product<B, O>(b: Bag<B>, func: (a: T, b: B) => O[]): Bag<O>;
         
     map<O>(func: (value: T) => O): Bag<O>;
+    filter(func: (value: T) => boolean): Bag<T>;
 }
 
 export function bag<T>(accept: Accept<T>): Bag<T> {
@@ -35,11 +36,14 @@ export function input<T>(): Bag<T> {
 }
 
 class BagImplementation<T> implements Bag<T> {
+    
     constructor(accept: Accept<T>) {
         this.accept = accept;
     }
+    
     accept: Accept<T>;
-    flatten<O>(func: (value: T) => [O]): Bag<O> {
+    
+    flatten<O>(func: (value: T) => O[]): Bag<O> {
         return bag(<R>(visitor: Visitor<O, R>) => visitor.flatten(this, func));
     }
     disjointUnion(b: Bag<T>): Bag<T> {
@@ -48,10 +52,14 @@ class BagImplementation<T> implements Bag<T> {
     groupBy<K>(toKey: (value: T) => K, reduce: (a: T, b: T) => T): Bag<T> {
         return bag(<R>(visitor: Visitor<T, R>) => visitor.groupBy(this, toKey, reduce));
     }
-    product<B, O>(b: Bag<B>, func: (a: T, b: B) => [O]): Bag<O> {
+    product<B, O>(b: Bag<B>, func: (a: T, b: B) => O[]): Bag<O> {
         return bag(<R>(visitor: Visitor<O, R>) => visitor.product(this, b, func));
     }
+    
     map<O>(func: (value: T) => O): Bag<O> {
         return this.flatten(value => [func(value)]);
+    }
+    filter(func: (value:T) => boolean): Bag<T> {
+        return this.flatten(value => func(value) ? [value] : []);
     }
 }
