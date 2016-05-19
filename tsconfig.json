@@ -1,5 +1,8 @@
 {
     "compilerOptions": {
+        "declaration": true,
+        "target": "es6",
+        "noImplicitAny": true
     },
     "exclude": [
     ]
