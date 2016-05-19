@@ -22,7 +22,7 @@ PureLogic for TypeScript
 
 - Visual Studio Code
 
-## Development Principals
+## Code Conventions
 
 Use interfaces instead of classes. For example,
 ```ts
@@ -40,3 +40,7 @@ function disjointUnion<T>(a: Bag<T>, b: Bag<T>): DisjointUnion<T> {
     };
 };
 ```
+
+## Target
+
+The project targets "ES6" because TypeScript 1.8 supports `async` only for "ES6" and above.
