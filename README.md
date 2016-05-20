@@ -28,25 +28,6 @@ See [lodash](https://lodash.com/docs) and [underscore](http://underscorejs.org/)
 
 - Visual Studio Code
 
-## Code Conventions
-
-Use interfaces instead of classes. For example,
-```ts
-interface Bag<T> {}
-
-interface DisjointUnion<T> extends Bag<T> {
-    a: Bag<T>;
-    b: Bag<T>;
-}
-
-function disjointUnion<T>(a: Bag<T>, b: Bag<T>): DisjointUnion<T> {
-    return {
-        a: a,
-        b: b,
-    };
-};
-```
-
-## Compilation Target
+## Target
 
 The project targets "ES6" because TypeScript 1.8 supports `async` only for "ES6" and above.
