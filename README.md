@@ -2,6 +2,12 @@
 
 PureLogic for TypeScript
 
+## Bag Types
+
+## Bag Methods
+
+See [lodash](https://lodash.com/docs) and [underscore](http://underscorejs.org/).
+
 ## Tools For Development
 
 ### Required. Stage 1
@@ -18,7 +24,7 @@ PureLogic for TypeScript
 - Istanbul
 - [TypeDoc](http://typedoc.io/)
 
-#### Optional
+### Optional
 
 - Visual Studio Code
 
