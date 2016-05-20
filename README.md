@@ -32,7 +32,7 @@ See [lodash](https://lodash.com/docs) and [underscore](http://underscorejs.org/)
 
 - Sync Memory
 - Async Memory
-- Event-based
+- Event-based in Memory
 
 ## Target
 
