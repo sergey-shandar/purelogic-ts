@@ -77,3 +77,23 @@ export class Bag<T> {
     }    
 }
 
+class Input<T, I> {
+    input: OptimizedBag<I>;
+    func: (value: I) => T[];
+}
+
+interface InputVisitor<T, R> {
+    <I>(input: Input<T, I>): R;
+}
+
+interface InputImplementation<T> {
+    <R>(visitor: InputVisitor<T, R>): R;
+}
+
+function inputImplementation<T, I>(input: Input<T, I>): InputImplementation<T> {
+    return <R>(visitor: InputVisitor<T, R>) => visitor(input);
+}
+
+class OptimizedBag<T> {
+    inputs: InputImplementation<T>[];
+}
