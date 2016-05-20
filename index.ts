@@ -63,7 +63,10 @@ export class Bag<T> {
     }
     compact(): Bag<T> {
         return this.filter(Boolean);
-    }    
+    }
+    reduce(func: (a: T, b: T) => T): Bag<T> {
+        return this.groupBy(v => <void> null, func);
+    }
     dif(b: Bag<T>): Bag<Dif<T>> {
         const toDif = (bag: Bag<T>, a: number, b: number) =>
             bag.map(v => new Dif(v, a, b));
@@ -73,3 +76,4 @@ export class Bag<T> {
             .groupBy(v => v.value, (x, y) => new Dif(x.value, x.a + y.a, x.b + y.b));
     }    
 }
+
