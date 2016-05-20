@@ -7,24 +7,23 @@ export interface Visitor<T, R> {
     product<A, B>(a: Bag<A>, b: Bag<B>, func: (a: A, b: B) => T[]): R;
 }
 
-export interface Accept<T> {
+export interface Implementation<T> {
     <R>(visitor: Visitor<T, R>): R;
-} 
-
-export interface Bag<T> { 
-    accept: Accept<T>;
-    
-    flatten<O>(func: (value: T) => O[]): Bag<O>;
-    disjointUnion(b: Bag<T>): Bag<T>;
-    groupBy<K>(toKey: (value: T) => K, reduce: (a: T, b: T) => T): Bag<T>;
-    product<B, O>(b: Bag<B>, func: (a: T, b: B) => O[]): Bag<O>;
-        
-    map<O>(func: (value: T) => O): Bag<O>;
-    filter(func: (value: T) => boolean): Bag<T>;
 }
 
-export function bag<T>(accept: Accept<T>): Bag<T> {
-    return new BagImplementation<T>(accept);
+export class Dif<T> { 
+    value: T;
+    a: number;
+    b: number;
+    constructor(value: T, a: number, b: number) {
+        this.value = value;
+        this.a = a;
+        this.b = b;
+    }
+}
+
+export function bag<T>(accept: Implementation<T>): Bag<T> {
+    return new Bag<T>(accept);
 }
 
 export function one<T>(value: T): Bag<T> {
@@ -35,13 +34,13 @@ export function input<T>(): Bag<T> {
     return bag(<R>(visitor: Visitor<T, R>) => visitor.input());
 }
 
-class BagImplementation<T> implements Bag<T> {
+export class Bag<T> {
     
-    constructor(accept: Accept<T>) {
-        this.accept = accept;
+    constructor(implementation: Implementation<T>) {
+        this.implementation = implementation;
     }
     
-    accept: Accept<T>;
+    implementation: Implementation<T>;
     
     flatten<O>(func: (value: T) => O[]): Bag<O> {
         return bag(<R>(visitor: Visitor<O, R>) => visitor.flatten(this, func));
@@ -62,4 +61,15 @@ class BagImplementation<T> implements Bag<T> {
     filter(func: (value:T) => boolean): Bag<T> {
         return this.flatten(value => func(value) ? [value] : []);
     }
+    compact(): Bag<T> {
+        return this.filter(Boolean);
+    }    
+    dif(b: Bag<T>): Bag<Dif<T>> {
+        const toDif = (bag: Bag<T>, a: number, b: number) =>
+            bag.map(v => new Dif(v, a, b));
+        const aDif = toDif(this, 1, 0);
+        const bDif = toDif(b, 0, 1);
+        return aDif.disjointUnion(bDif)
+            .groupBy(v => v.value, (x, y) => new Dif(x.value, x.a + y.a, x.b + y.b));
+    }    
 }

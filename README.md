@@ -47,6 +47,6 @@ function disjointUnion<T>(a: Bag<T>, b: Bag<T>): DisjointUnion<T> {
 };
 ```
 
-## Target
+## Compilation Target
 
 The project targets "ES6" because TypeScript 1.8 supports `async` only for "ES6" and above.
