@@ -77,35 +77,3 @@ export class Bag<T> {
     }    
 }
 
-class OptimizedInput<T, I> {
-    input: OptimizedBagImplementation<I>;
-    func: (value: I) => T[];
-}
-
-interface OptimizedInputVisitor<T, R> {
-    <I>(input: OptimizedInput<T, I>): R;
-}
-
-interface OptimizedInputImplementation<T> {
-    <R>(visitor: OptimizedInputVisitor<T, R>): R;
-}
-
-function optimizedInputImplementation<T, I>(input: OptimizedInput<T, I>): OptimizedInputImplementation<T> {
-    return <R>(visitor: OptimizedInputVisitor<T, R>) => visitor(input);
-}
-
-interface OptimizedBagVisitor<T, R> {
-    <I>(bag: OptimizedBag<T, I>): R;
-}
-
-interface OptimizedBagImplementation<T> {
-    <R>(visitor: OptimizedBagVisitor<T, R>): R;
-}
-
-function optimizedBagImplementation<T, I>(input: OptimizedBag<T, I>): OptimizedBagImplementation<T> {
-    return <R>(visitor: OptimizedBagVisitor<T, R>) => visitor(input);
-}
-
-class OptimizedBag<T, I> {
-    inputs: OptimizedInputImplementation<I>[];
-}
