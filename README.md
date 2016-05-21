@@ -28,6 +28,12 @@ See [lodash](https://lodash.com/docs) and [underscore](http://underscorejs.org/)
 
 - Visual Studio Code
 
+## Back-ends
+
+- Sync Memory
+- Async Memory
+- Event-based in Memory
+
 ## Target
 
 The project targets "ES6" because TypeScript 1.8 supports `async` only for "ES6" and above.
