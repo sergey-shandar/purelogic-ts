@@ -2,7 +2,7 @@ export interface Visitor<T, R> {
     flatten<I>(input: Bag<I>, func: (value: I) => T[]): R;
     disjointUnion(a: Bag<T>, b: Bag<T>): R;
     one(value: T): R;
-    input(): R;
+    input(bag: Bag<T>): R;
     groupBy<K>(input: Bag<T>, toKey: (value: T) => K, reduce: (a: T, b: T) => T): R;
     product<A, B>(a: Bag<A>, b: Bag<B>, func: (a: A, b: B) => T[]): R;
 }
@@ -31,7 +31,7 @@ export function one<T>(value: T): Bag<T> {
 }
 
 export function input<T>(): Bag<T> {
-    return bag(<R>(visitor: Visitor<T, R>) => visitor.input());
+    return bag(<R>(visitor: Visitor<T, R>) => visitor.input(this));
 }
 
 export class Bag<T> {
@@ -77,23 +77,35 @@ export class Bag<T> {
     }    
 }
 
-class Input<T, I> {
-    input: OptimizedBag<I>;
+class OptimizedInput<T, I> {
+    input: OptimizedBagImplementation<I>;
     func: (value: I) => T[];
 }
 
-interface InputVisitor<T, R> {
-    <I>(input: Input<T, I>): R;
+interface OptimizedInputVisitor<T, R> {
+    <I>(input: OptimizedInput<T, I>): R;
 }
 
-interface InputImplementation<T> {
-    <R>(visitor: InputVisitor<T, R>): R;
+interface OptimizedInputImplementation<T> {
+    <R>(visitor: OptimizedInputVisitor<T, R>): R;
 }
 
-function inputImplementation<T, I>(input: Input<T, I>): InputImplementation<T> {
-    return <R>(visitor: InputVisitor<T, R>) => visitor(input);
+function optimizedInputImplementation<T, I>(input: OptimizedInput<T, I>): OptimizedInputImplementation<T> {
+    return <R>(visitor: OptimizedInputVisitor<T, R>) => visitor(input);
 }
 
-class OptimizedBag<T> {
-    inputs: InputImplementation<T>[];
+interface OptimizedBagVisitor<T, R> {
+    <I>(bag: OptimizedBag<T, I>): R;
+}
+
+interface OptimizedBagImplementation<T> {
+    <R>(visitor: OptimizedBagVisitor<T, R>): R;
+}
+
+function optimizedBagImplementation<T, I>(input: OptimizedBag<T, I>): OptimizedBagImplementation<T> {
+    return <R>(visitor: OptimizedBagVisitor<T, R>) => visitor(input);
+}
+
+class OptimizedBag<T, I> {
+    inputs: OptimizedInputImplementation<I>[];
 }
