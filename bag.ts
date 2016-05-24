@@ -2,7 +2,7 @@ export interface Visitor<T, R> {
     flatten<I>(input: Bag<I>, func: (value: I) => T[]): R;
     disjointUnion(a: Bag<T>, b: Bag<T>): R;
     one(value: T): R;
-    input(bag: Bag<T>): R;
+    input(): R;
     groupBy<K>(input: Bag<T>, toKey: (value: T) => K, reduce: (a: T, b: T) => T): R;
     product<A, B>(a: Bag<A>, b: Bag<B>, func: (a: A, b: B) => T[]): R;
 }
@@ -31,7 +31,7 @@ export function one<T>(value: T): Bag<T> {
 }
 
 export function input<T>(): Bag<T> {
-    return bag(<R>(visitor: Visitor<T, R>) => visitor.input(this));
+    return bag(<R>(visitor: Visitor<T, R>) => visitor.input());
 }
 
 export class Bag<T> {

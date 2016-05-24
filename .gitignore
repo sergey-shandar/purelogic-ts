@@ -1,3 +1,4 @@
 *.js
 *.d.ts
 *.tgz
+node_modules/
