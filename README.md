@@ -1,5 +1,7 @@
 # purelogic-ts
 
+[![Build Status](https://travis-ci.org/sergey-shandar/purelogic-ts.svg?branch=master)](https://travis-ci.org/sergey-shandar/purelogic-ts)
+
 PureLogic for TypeScript
 
 ## Bag Types
