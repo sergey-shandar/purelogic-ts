@@ -20,8 +20,5 @@
     "*.js",
     "*.d.ts"
   ],
-  "homepage": "https://github.com/sergey-shandar/purelogic-ts#readme",
-  "devDependencies": {
-    "typescript": "^1.8.10"
-  }
+  "homepage": "https://github.com/sergey-shandar/purelogic-ts#readme"
 }
