@@ -1,33 +1,56 @@
-export class Input<T, I> {
-    input: BagImplementation<I>;
-    func: (value: I) => T[];
+/**
+ * I - input
+ * O - output
+ */
+export class Input<O, I> {
+    bag: BagImplementation<I>;
+    func: (value: I) => O[];
 }
 
-export interface InputVisitor<T, R> {
-    <I>(input: Input<T, I>): R;
+/**
+ * O - output
+ * R - result
+ */
+export interface InputVisitor<O, R> {
+    /**
+     * I - input
+     */
+    <I>(input: Input<O, I>): R;
 }
 
-export interface InputImplementation<T> {
-    <R>(visitor: InputVisitor<T, R>): R;
+/**
+ * O - output
+ */
+export interface InputImplementation<O> {
+    <R>(visitor: InputVisitor<O, R>): R;
 }
 
-export function inputImplementation<T, I>(input: Input<T, I>): InputImplementation<T> {
-    return <R>(visitor: InputVisitor<T, R>) => visitor(input);
+/**
+ * 
+ */
+export function inputImplementation<O, I>(input: Input<O, I>): InputImplementation<O> {
+    return <R>(visitor: InputVisitor<O, R>) => visitor(input);
 }
 
-export interface BagVisitor<T, R> {
-    <I>(bag: Bag<T, I>): R;
+export interface BagVisitor<O, R> {
+    <I>(bag: Bag<O, I>): R;
 }
 
-export interface BagImplementation<T> {
-    <R>(visitor: BagVisitor<T, R>): R;
+export interface BagImplementation<O> {
+    <R>(visitor: BagVisitor<O, R>): R;
 }
 
-export function bagImplementation<T, I>(input: Bag<T, I>): BagImplementation<T> {
-    return <R>(visitor: BagVisitor<T, R>) => visitor(input);
+export function bagImplementation<O, I>(bag: Bag<O, I>): BagImplementation<O> {
+    return <R>(visitor: BagVisitor<O, R>) => visitor(bag);
 }
 
-export class Bag<T, I> {
+/**
+ * - one(value: T): R;
+ * - input(): R;
+ * - groupBy<K>(input: Bag<T>, toKey: (value: T) => K, reduce: (a: T, b: T) => T): R;
+ * - product<A, B>(a: Bag<A>, b: Bag<B>, func: (a: A, b: B) => T[]): R;
+ */
+export class Bag<O, I> {
     inputs: InputImplementation<I>[];
     constructor(inputs: InputImplementation<I>[]) {
         this.inputs = inputs;

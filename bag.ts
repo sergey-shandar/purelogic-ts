@@ -76,4 +76,3 @@ export class Bag<T> {
             .groupBy(v => v.value, (x, y) => new Dif(x.value, x.a + y.a, x.b + y.b));
     }    
 }
-
