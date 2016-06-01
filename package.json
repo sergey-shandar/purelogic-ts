@@ -4,9 +4,9 @@
   "description": "PureLogic for TypeScript",
   "main": "index.js",
   "scripts": {
-    "prepublish": "tsc",
     "mocha": "mocha",
     "typings": "typings",
+    "prepublish": "typings install && tsc",
     "test": "tsc && istanbul cover node_modules/mocha/bin/_mocha"
   },
   "repository": {
