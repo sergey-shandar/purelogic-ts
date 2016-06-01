@@ -14,23 +14,18 @@ See [lodash](https://lodash.com/docs) and [underscore](http://underscorejs.org/)
 
 ## Tools For Development
 
-### Required. Stage 1
+### Required
 
 - [Node.js](https://nodejs.org/en/) 6.2.0 or higher
-- TypeScript 1.8.10 or higher, `npm install typescript -g`
-
-### Required. Stage 2
-
-- TSNode
-- TSLint
-- Mocha
-- Chai
-- Istanbul
-- [TypeDoc](http://typedoc.io/)
 
 ### Optional
 
 - Visual Studio Code
+
+### For Developers
+
+- install dependencies `npm install`.
+- run unit test and coverage `npm test`.
 
 ## Back-ends
 
