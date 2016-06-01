@@ -2,3 +2,5 @@
 *.d.ts
 *.tgz
 node_modules/
+typings/
+coverage/

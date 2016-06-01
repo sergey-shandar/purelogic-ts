@@ -1,0 +1,5 @@
+{
+  "globalDevDependencies": {
+    "mocha": "registry:env/mocha#2.2.5+20160321223601"
+  }
+}

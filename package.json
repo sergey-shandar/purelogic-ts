@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "prepublish": "tsc",
+    "mocha": "mocha",
+    "typings": "typings",
     "test": "tsc && istanbul cover node_modules/mocha/bin/_mocha"
   },
   "repository": {
@@ -24,6 +26,7 @@
   "devDependencies": {
     "istanbul": "^0.4.3",
     "mocha": "^2.5.2",
-    "typescript": "^1.8.10"
+    "typescript": "^1.8.10",
+    "typings": "^1.0.4"
   }
 }
