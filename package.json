@@ -4,10 +4,11 @@
   "description": "PureLogic for TypeScript",
   "main": "index.js",
   "scripts": {
+    "prepublish": "typings install && tsc",
+    "test": "tsc && istanbul cover node_modules/mocha/bin/_mocha && istanbul check-coverage",
     "mocha": "mocha",
     "typings": "typings",
-    "prepublish": "typings install && tsc",
-    "test": "tsc && istanbul cover node_modules/mocha/bin/_mocha"
+    "istanbul": "istanbul"
   },
   "repository": {
     "type": "git",
