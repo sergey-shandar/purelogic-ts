@@ -1,5 +1,8 @@
 import * as Bag from "../bag";
 import "mocha";
+import * as chai from "chai";
+
+chai.should();
 
 describe("bag.ts", function() {
     it("one()", () => {
@@ -7,7 +10,7 @@ describe("bag.ts", function() {
         one.implementation({
             flatten: null,
             disjointUnion: null,
-            one: x => null,
+            one: x => x.should.equal(5),
             input: null,
             groupBy: null,
             product: null,
