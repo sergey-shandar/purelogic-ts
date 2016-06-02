@@ -21,7 +21,7 @@ function check<T>(bag: Bag.Bag<T>, visitor: Visitor<T>) {
 describe("bag.ts", function() {
     it("one()", () => check(Bag.one(5), { one: x => x.should.equal(5) }));
     it("input()", () => check(Bag.input<string>(), { input: () => null }));
-    describe("class bag", function() {
+    describe("class Bag", function() {
         it("flatten()", () => {
             const i = Bag.input<number>();
             const f = (x: number) => [x, x * 2, x * 3];
@@ -124,36 +124,27 @@ describe("bag.ts", function() {
         it("dif()", () => {
             const a = Bag.one("hello");
             const b = Bag.one("world");
-            check(
-                a.dif(b),
-                {
-                    groupBy: (
-                        m: Bag.Bag<Bag.Dif<string>>,
-                        kx: (v: Bag.Dif<string>) => string,
-                        rx: any) => {
-                            
-                        kx(new Bag.Dif("hello", 1, 2)).should.equal("hello");
-                        rx(new Bag.Dif("hello", 2, 3), new Bag.Dif("world", 4, 8)).should.deep
-                            .equal(new Bag.Dif("hello", 6, 11));
+            check(a.dif(b), {
+                groupBy: (
+                    m: Bag.Bag<Bag.Dif<string>>,
+                    kx: (v: Bag.Dif<string>) => string,
+                    rx: any) => {
                         
-                        check(
-                            m,
-                            {
-                                disjointUnion: (ad, bd) => 
-                                    check(
-                                        ad,
-                                        {
-                                            flatten: (ax: any, f: any) => {
-                                                ax.should.equal(a);
-                                                f("hello").should.deep.equal(
-                                                    [new Bag.Dif("hello", 1, 0)]);
-                                            }       
-                                        }
-                                    )
-                            })
-                    }
-                }
-            ); 
+                    kx(new Bag.Dif("hello", 1, 2)).should.equal("hello");
+                    rx(new Bag.Dif("hello", 2, 3), new Bag.Dif("world", 4, 8)).should.deep
+                        .equal(new Bag.Dif("hello", 6, 11));
+                    
+                    check(m, {
+                        disjointUnion: (ad, bd) => check(ad, {
+                            flatten: (ax: any, f: any) => {
+                                ax.should.equal(a);
+                                f("hello").should.deep.equal(
+                                    [new Bag.Dif("hello", 1, 0)]);
+                            },       
+                        }),
+                    });
+                },
+            }); 
         });
     });
 });
