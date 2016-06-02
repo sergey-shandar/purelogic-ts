@@ -1,58 +1,53 @@
+export type FlattenFunc<I, O> = (value: I) => O[];
+
+export type KeyFunc<I, K> = (value: I) => K;
+
+export type ReduceFunc<T> = (a: T, b: T) => T;
+
+export type ProductFunc<A, B, O> = (a: A, b: B) => O[];
+
 export interface Visitor<T, R> {
-    flatten<I>(input: Bag<I>, func: (value: I) => T[]): R;
+    flatten<I>(input: Bag<I>, func: FlattenFunc<I, T>): R;
     disjointUnion(a: Bag<T>, b: Bag<T>): R;
     one(value: T): R;
-    input(): R;
-    groupBy<K>(input: Bag<T>, toKey: (value: T) => K, reduce: (a: T, b: T) => T): R;
-    product<A, B>(a: Bag<A>, b: Bag<B>, func: (a: A, b: B) => T[]): R;
+    input(id: number): R;
+    groupBy<K>(input: Bag<T>, toKey: KeyFunc<T, K>, reduce: ReduceFunc<T>): R;
+    product<A, B>(a: Bag<A>, b: Bag<B>, func: ProductFunc<A, B, T>): R;
 }
 
-export interface Implementation<T> {
-    <R>(visitor: Visitor<T, R>): R;
-}
+export type Implementation<T> = <R>(visitor: Visitor<T, R>) => R; 
 
 export class Dif<T> { 
-    value: T;
-    a: number;
-    b: number;
-    constructor(value: T, a: number, b: number) {
-        this.value = value;
-        this.a = a;
-        this.b = b;
-    }
-}
-
-export function bag<T>(accept: Implementation<T>): Bag<T> {
-    return new Bag<T>(accept);
+    constructor(public value: T, public a: number, public b: number) { }
 }
 
 export function one<T>(value: T): Bag<T> {
-    return bag(<R>(visitor: Visitor<T, R>) => visitor.one(value));
+    return new Bag(<R>(visitor: Visitor<T, R>) => visitor.one(value));
 }
 
+let inputId = 0;
+
 export function input<T>(): Bag<T> {
-    return bag(<R>(visitor: Visitor<T, R>) => visitor.input());
+    const id = inputId; 
+    ++inputId;
+    return new Bag(<R>(visitor: Visitor<T, R>) => visitor.input(id));
 }
 
 export class Bag<T> {
     
-    constructor(implementation: Implementation<T>) {
-        this.implementation = implementation;
-    }
+    constructor(public implementation: Implementation<T>) { }
     
-    implementation: Implementation<T>;
-    
-    flatten<O>(func: (value: T) => O[]): Bag<O> {
-        return bag(<R>(visitor: Visitor<O, R>) => visitor.flatten(this, func));
+    flatten<O>(func: FlattenFunc<T, O>): Bag<O> {
+        return new Bag(<R>(visitor: Visitor<O, R>) => visitor.flatten(this, func));
     }
     disjointUnion(b: Bag<T>): Bag<T> {
-        return bag(<R>(visitor: Visitor<T, R>) => visitor.disjointUnion(this, b));
+        return new Bag(<R>(visitor: Visitor<T, R>) => visitor.disjointUnion(this, b));
     }
-    groupBy<K>(toKey: (value: T) => K, reduce: (a: T, b: T) => T): Bag<T> {
-        return bag(<R>(visitor: Visitor<T, R>) => visitor.groupBy(this, toKey, reduce));
+    groupBy<K>(toKey: KeyFunc<T, K>, reduce: ReduceFunc<T>): Bag<T> {
+        return new Bag(<R>(visitor: Visitor<T, R>) => visitor.groupBy(this, toKey, reduce));
     }
-    product<B, O>(b: Bag<B>, func: (a: T, b: B) => O[]): Bag<O> {
-        return bag(<R>(visitor: Visitor<O, R>) => visitor.product(this, b, func));
+    product<B, O>(b: Bag<B>, func: ProductFunc<T, B, O>): Bag<O> {
+        return new Bag(<R>(visitor: Visitor<O, R>) => visitor.product(this, b, func));
     }
     
     map<O>(func: (value: T) => O): Bag<O> {
@@ -64,7 +59,7 @@ export class Bag<T> {
     compact(): Bag<T> {
         return this.filter(Boolean);
     }
-    reduce(func: (a: T, b: T) => T): Bag<T> {
+    reduce(func: ReduceFunc<T>): Bag<T> {
         return this.groupBy(() => null, func);
     }
     dif(b: Bag<T>): Bag<Dif<T>> {
