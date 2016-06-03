@@ -1,4 +1,5 @@
 import { FlattenFunc, KeyFunc, ReduceFunc, ProductFunc } from "./bag";
+import { arrayRef } from "./array-ref";
 
 interface Visitor<T, R> {
     input(id: number): R;
@@ -24,16 +25,11 @@ type LinkVisitor<T, R> = <I>(bag: Bag<I>, func: FlattenFunc<I, T>) => R;
 
 type LinkImplementation<T> = <R>(visitor: LinkVisitor<T, R>) => R; 
 
-function arrayFlatten<I, O>(a: I[], f: FlattenFunc<I, O>): O[] {
-    const result: O[] = [];
-    return result.concat(...a.map(f));
-}
-
 class Link<T> {
     constructor(public implementation: LinkImplementation<T>) {}
     flatten<O>(func: FlattenFunc<T, O>): Link<O> {
         function visitor<I>(b: Bag<I>, f: FlattenFunc<I, T>): Link<O> {
-            return link(b, value => arrayFlatten(f(value), func));
+            return link(b, value => arrayRef(f(value)).flatten(func));
         }
         return this.implementation(visitor);        
     }
