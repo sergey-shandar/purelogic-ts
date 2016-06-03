@@ -13,7 +13,7 @@ describe("array.ts", function() {
         it("flatten()", () =>
             ref([3, 4, 5]).flatten(x => [x, x * 2]).should.deep.equal([3, 6, 4, 8, 5, 10])
         );
-        it("remove()", () => {
+        it("spliceOne()", () => {
             const a: string[] = ["x", "y", "z"];
             ref(a).spliceOne(1).should.equal("y");
             a.should.deep.equal(["x", "z"]);
