@@ -1,4 +1,5 @@
 import { FlattenFunc, KeyFunc, ReduceFunc, ProductFunc } from "./bag";
+import { arrayRef } from "./array-ref";
 
 function arrayFlatten<I, O>(a: I[], f: FlattenFunc<I, O>): O[] {
     const result: O[] = [];
@@ -37,7 +38,7 @@ class Link<T> {
     constructor(public implementation: LinkImplementation<T>) {}
     flatten<O>(func: FlattenFunc<T, O>): Link<O> {
         function visitor<I>(b: Bag<I>, f: FlattenFunc<I, T>): Link<O> {
-            return link(b, value => arrayFlatten(f(value), func));
+            return link(b, value => arrayRef(f(value)).flatten(func));
         }
         return this.implementation(visitor);
     }
