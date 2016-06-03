@@ -22,11 +22,15 @@ class Bag<T> {
 
 type LinkVisitor<T, R> = <I>(bag: Bag<I>, func: FlattenFunc<I, T>) => R;
 
-type LinkImplementation<T> = <R>(visitor: LinkVisitor<T, R>) => R; 
+type LinkImplementation<T> = <R>(visitor: LinkVisitor<T, R>) => R;
 
 function arrayFlatten<I, O>(a: I[], f: FlattenFunc<I, O>): O[] {
     const result: O[] = [];
     return result.concat(...a.map(f));
+}
+
+function arrayRemove<T>(a: T[], i: number): T {
+    return a.splice(i, 1)[0];
 }
 
 class Link<T> {
@@ -35,7 +39,20 @@ class Link<T> {
         function visitor<I>(b: Bag<I>, f: FlattenFunc<I, T>): Link<O> {
             return link(b, value => arrayFlatten(f(value), func));
         }
-        return this.implementation(visitor);        
+        return this.implementation(visitor);
+    }
+    bagEqual<B>(b: Bag<B>): boolean {
+        function visitor<I>(a: Bag<I>, f: FlattenFunc<I, T>): boolean {
+            return (<any> b) === a;
+        }
+        return this.implementation(visitor);
+    }
+    addFunc(getFunc: <I>() => FlattenFunc<I, T>): Link<T> {
+        function visitor<I>(a: Bag<I>, f: FlattenFunc<I, T>): Link<T> {
+            const fNew = getFunc<I>();
+            return link(a, i => f(i).concat(fNew(i)));
+        }
+        return this.implementation(visitor);
     }
 }
 
@@ -54,24 +71,23 @@ class Links<T> {
     flatten<O>(func: FlattenFunc<T, O>): Links<O> {
         return new Links(this.array.map(link => link.flatten(func)));
     }
-    /*
     disjointUnion(b: Links<T>): Links<T> {
         const aLinks: Link<T>[] = [];
         this.array.forEach(aLink => aLinks.push(aLink));
-        const bLinks: Link<T>[] = [];        
+        const bLinks: Link<T>[] = [];
         b.array.forEach(bLink => {
             function bVisitor<B>(bBag: Bag<B>, f: FlattenFunc<B, T>): void {
-                function bagEqual<A>(aBag: Bag<A>, f: FlattenFunc<A, T>): boolean {
-                    return <any> bBag === aBag;
-                }
-                const i = aLinks.findIndex(aLink => aLink.implementation(bagEqual));
-                bLinks.push(bLink);
-            }            
+                const i = aLinks.findIndex(aLink => aLink.bagEqual(bBag));
+                function getFunc<I>(): FlattenFunc<I, T> { return <any> f; }
+                bLinks.push(i !== undefined
+                    ? arrayRemove(aLinks, i).addFunc(getFunc)
+                    : bLink
+                );
+            }
             bLink.implementation(bVisitor);
         });
         return null;
     }
-    */
 }
 
 function input<T>(id: number): Bag<T> {
