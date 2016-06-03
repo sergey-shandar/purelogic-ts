@@ -1,15 +1,6 @@
 import { FlattenFunc, KeyFunc, ReduceFunc, ProductFunc } from "./bag";
 import { arrayRef } from "./array-ref";
 
-function arrayFlatten<I, O>(a: I[], f: FlattenFunc<I, O>): O[] {
-    const result: O[] = [];
-    return result.concat(...a.map(f));
-}
-
-function arrayRemove<T>(a: T[], i: number): T {
-    return a.splice(i, 1)[0];
-}
-
 interface Visitor<T, R> {
     input(id: number): R;
     one(value: T): R;
@@ -81,7 +72,7 @@ class Links<T> {
                 const i = aLinks.findIndex(aLink => aLink.bagEqual(bBag));
                 function getFunc<I>(): FlattenFunc<I, T> { return <any> f; }
                 bLinks.push(i !== undefined
-                    ? arrayRemove(aLinks, i).addFunc(getFunc)
+                    ? arrayRef(aLinks).remove(i).addFunc(getFunc)
                     : bLink
                 );
             }
