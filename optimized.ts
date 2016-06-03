@@ -22,15 +22,42 @@ class Bag<T> {
 
 type LinkVisitor<T, R> = <I>(bag: Bag<I>, func: FlattenFunc<I, T>) => R;
 
-type Link<T> = <R>(visitor: LinkVisitor<T, R>) => R;
-
-function link<I, O>(bag: Bag<I>, func: FlattenFunc<I, O>): Link<O> {
-    return <R>(visitor: LinkVisitor<O, R>) => visitor(bag, func);
-}
+type LinkImplementation<T> = <R>(visitor: LinkVisitor<T, R>) => R;
 
 function arrayFlatten<I, O>(a: I[], f: FlattenFunc<I, O>): O[] {
     const result: O[] = [];
     return result.concat(...a.map(f));
+}
+
+function arrayRemove<T>(a: T[], i: number): T {
+    return a.splice(i, 1)[0];
+}
+
+class Link<T> {
+    constructor(public implementation: LinkImplementation<T>) {}
+    flatten<O>(func: FlattenFunc<T, O>): Link<O> {
+        function visitor<I>(b: Bag<I>, f: FlattenFunc<I, T>): Link<O> {
+            return link(b, value => arrayFlatten(f(value), func));
+        }
+        return this.implementation(visitor);
+    }
+    bagEqual<B>(b: Bag<B>): boolean {
+        function visitor<I>(a: Bag<I>, f: FlattenFunc<I, T>): boolean {
+            return (<any> b) === a;
+        }
+        return this.implementation(visitor);
+    }
+    addFunc(getFunc: <I>() => FlattenFunc<I, T>): Link<T> {
+        function visitor<I>(a: Bag<I>, f: FlattenFunc<I, T>): Link<T> {
+            const fNew = getFunc<I>();
+            return link(a, i => f(i).concat(fNew(i)));
+        }
+        return this.implementation(visitor);
+    }
+}
+
+function link<I, O>(bag: Bag<I>, func: FlattenFunc<I, O>): Link<O> {
+    return new Link(<R>(visitor: LinkVisitor<O, R>) => visitor(bag, func));
 }
 
 class Links<T> {
@@ -42,10 +69,24 @@ class Links<T> {
         return new Bag(<R>(visitor: Visitor<O, R>) => visitor.product(this, b, func));
     }
     flatten<O>(func: FlattenFunc<T, O>): Links<O> {
-        function visitor<I>(b: Bag<I>, f: FlattenFunc<I, T>): Link<O> {
-            return link(b, value => arrayFlatten(f(value), func));
-        }
-        return new Links(this.array.map(x => x(visitor)));
+        return new Links(this.array.map(link => link.flatten(func)));
+    }
+    disjointUnion(b: Links<T>): Links<T> {
+        const aLinks: Link<T>[] = [];
+        this.array.forEach(aLink => aLinks.push(aLink));
+        const bLinks: Link<T>[] = [];
+        b.array.forEach(bLink => {
+            function bVisitor<B>(bBag: Bag<B>, f: FlattenFunc<B, T>): void {
+                const i = aLinks.findIndex(aLink => aLink.bagEqual(bBag));
+                function getFunc<I>(): FlattenFunc<I, T> { return <any> f; }
+                bLinks.push(i !== undefined
+                    ? arrayRemove(aLinks, i).addFunc(getFunc)
+                    : bLink
+                );
+            }
+            bLink.implementation(bVisitor);
+        });
+        return null;
     }
 }
 

@@ -5,10 +5,11 @@
   "main": "index.js",
   "scripts": {
     "prepublish": "typings install && tsc",
-    "test": "tsc && istanbul cover node_modules/mocha/bin/_mocha && istanbul check-coverage",
+    "test": "tsc && tslint *.ts && istanbul cover node_modules/mocha/bin/_mocha && istanbul check-coverage",
     "mocha": "mocha",
     "typings": "typings",
-    "istanbul": "istanbul"
+    "istanbul": "istanbul",
+    "tslint": "tslint"
   },
   "repository": {
     "type": "git",
@@ -28,6 +29,7 @@
     "chai": "^3.5.0",
     "istanbul": "^0.4.3",
     "mocha": "^2.5.2",
+    "tslint": "^3.10.2",
     "typescript": "^1.8.10",
     "typings": "^1.0.4"
   }
