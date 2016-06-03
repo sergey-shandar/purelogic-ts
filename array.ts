@@ -1,10 +1,10 @@
-import { FlattenFunc } from "./bag";
+import * as flatten from "./flatten";
 
 export class Ref<T> {
 
     constructor(public array: T[]) {}
 
-    flatten<O>(f: FlattenFunc<T, O>): O[] {
+    flatten<O>(f: flatten.Func<T, O>): O[] {
         const result: O[] = [];
         return result.concat(...this.array.map(f));
     }

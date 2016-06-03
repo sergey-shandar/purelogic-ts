@@ -1,4 +1,4 @@
-export type FlattenFunc<I, O> = (value: I) => O[];
+import * as flatten from "./flatten";
 
 export type KeyFunc<I, K> = (value: I) => K;
 
@@ -7,7 +7,7 @@ export type ReduceFunc<T> = (a: T, b: T) => T;
 export type ProductFunc<A, B, O> = (a: A, b: B) => O[];
 
 export interface Visitor<T, R> {
-    flatten<I>(input: Bag<I>, func: FlattenFunc<I, T>): R;
+    flatten<I>(input: Bag<I>, func: flatten.Func<I, T>): R;
     disjointUnion(a: Bag<T>, b: Bag<T>): R;
     one(value: T): R;
     input(id: number): R;
@@ -37,7 +37,7 @@ export class Bag<T> {
 
     constructor(public implementation: Implementation<T>) { }
 
-    flatten<O>(func: FlattenFunc<T, O>): Bag<O> {
+    flatten<O>(func: flatten.Func<T, O>): Bag<O> {
         return new Bag(<R>(visitor: Visitor<O, R>) => visitor.flatten(this, func));
     }
     disjointUnion(b: Bag<T>): Bag<T> {
