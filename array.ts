@@ -1,6 +1,6 @@
 import { FlattenFunc } from "./bag";
 
-export class ArrayRef<T> {
+export class Ref<T> {
 
     constructor(public array: T[]) {}
 
@@ -14,6 +14,6 @@ export class ArrayRef<T> {
     }
 }
 
-export function arrayRef<T>(array: T[]): ArrayRef<T> {
-    return new ArrayRef(array);
+export function ref<T>(array: T[]): Ref<T> {
+    return new Ref(array);
 }
