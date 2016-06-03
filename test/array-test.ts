@@ -15,7 +15,7 @@ describe("array.ts", function() {
         );
         it("remove()", () => {
             const a: string[] = ["x", "y", "z"];
-            ref(a).remove(1).should.equal("y");
+            ref(a).spliceOne(1).should.equal("y");
             a.should.deep.equal(["x", "z"]);
         });
     });

@@ -69,7 +69,7 @@ class Links<T> {
                 const i = aLinks.findIndex(aLink => aLink.bagEqual(bBag));
                 function getFunc<I>(): flatten.Func<I, T> { return <any> f; }
                 bLinks.push(i !== undefined
-                    ? array.ref(aLinks).remove(i).addFunc(getFunc)
+                    ? array.ref(aLinks).spliceOne(i).addFunc(getFunc)
                     : bLink
                 );
             }

@@ -9,7 +9,7 @@ export class Ref<T> {
         return result.concat(...this.array.map(f));
     }
 
-    remove(i: number): T {
+    spliceOne(i: number): T {
         return this.array.splice(i, 1)[0];
     }
 }
