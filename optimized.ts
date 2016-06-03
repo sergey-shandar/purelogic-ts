@@ -1,5 +1,14 @@
 import { FlattenFunc, KeyFunc, ReduceFunc, ProductFunc } from "./bag";
 
+function arrayFlatten<I, O>(a: I[], f: FlattenFunc<I, O>): O[] {
+    const result: O[] = [];
+    return result.concat(...a.map(f));
+}
+
+function arrayRemove<T>(a: T[], i: number): T {
+    return a.splice(i, 1)[0];
+}
+
 interface Visitor<T, R> {
     input(id: number): R;
     one(value: T): R;
@@ -23,15 +32,6 @@ class Bag<T> {
 type LinkVisitor<T, R> = <I>(bag: Bag<I>, func: FlattenFunc<I, T>) => R;
 
 type LinkImplementation<T> = <R>(visitor: LinkVisitor<T, R>) => R;
-
-function arrayFlatten<I, O>(a: I[], f: FlattenFunc<I, O>): O[] {
-    const result: O[] = [];
-    return result.concat(...a.map(f));
-}
-
-function arrayRemove<T>(a: T[], i: number): T {
-    return a.splice(i, 1)[0];
-}
 
 class Link<T> {
     constructor(public implementation: LinkImplementation<T>) {}
