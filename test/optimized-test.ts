@@ -17,16 +17,24 @@ function check<T>(bag: Node<T>, visitor: OptionalBagVisitor<T>) {
 describe("optimized.ts", function() {
     it("input()", () => {
         input(7).id.should.equal(7);
-        check(input(5), {
-            input: () => null
-        })
+        const b = input(5);
+        b.array[0].implementation(<I>(n: Node<I>, bf: flatten.Func<I, number>) => {
+            check(n, {
+                input: () => null
+            })
+        });
+
     });
-    it("one()", () => check(one(0, "Hello!"), {
-        one: s => s.should.equal("Hello!")
-    }));
-    describe("class Bag", function() {
+    it("one()", () => {
+        one(0, "Hello!").array[0].implementation(<I>(n: Node<I>, bf: flatten.Func<I, string>) => {
+            check(n, {
+                one: s => s.should.equal("Hello!")
+            })
+        });
+    });
+    describe("class Node", function() {
         it("link()", () => {
-            const a = one(0, "Hello world!");
+            const a = new Node(0, <R>(visitor: NodeVisitor<string, R>) => visitor.one("Hello world!"));
             const f = (s: string) => [s.indexOf("H")];
             const link = a.link(f);
             link.implementation(<I>(b: Node<I>, bf: flatten.Func<I, number>) => {
@@ -35,7 +43,7 @@ describe("optimized.ts", function() {
             })
         })
         it("bag()", () => {
-            const a = one(42, "Hello world!");
+            const a = new Node(42, <R>(visitor: NodeVisitor<string, R>) => visitor.one("Hello world!"));
             const bag = a.bag();
             bag.id.should.equal(42);
             bag.array.length.should.equal(1);
@@ -47,7 +55,7 @@ describe("optimized.ts", function() {
     })
     describe("class Link", function() {
         it("flatten()", () => {
-            const a = one(0, 10);
+            const a = new Node(0, <R>(visitor: NodeVisitor<number, R>) => visitor.one(10));
             const f = (x: number) => [x, x * x];
             const link = a.link(flatten.identity).flatten(f);
             link.implementation(<I>(b: Node<I>, bf: flatten.Func<I, number>) => {
@@ -61,14 +69,17 @@ describe("optimized.ts", function() {
                 bf(<I> <any> 10).should.deep.equal([10, 11, 100, 101]);
             });
         })
-        it("bagEqual()", () => {
-            const x = input<string>(5);
+        it("nodeEqual()", () => {
+            const x = new Node(0, <R>(visitor: NodeVisitor<string, R>) => visitor.input());
+            const x1 = new Node(0, <R>(visitor: NodeVisitor<string, R>) => visitor.input());
+            const y = new Node(1, <R>(visitor: NodeVisitor<string, R>) => visitor.input());
             const link = x.link(v => [v, v + v]);
             link.nodeEqual(x).should.equal(true);
-            link.nodeEqual(one(0, "hello")).should.equal(false);
+            link.nodeEqual(x1).should.equal(true);
+            link.nodeEqual(y).should.equal(false);
         })
         it("addFunc()", () => {
-            const x = one(0, "something");
+            const x = new Node(0, <R>(visitor: NodeVisitor<string, R>) => visitor.one("something"));
             const link = x.link(flatten.identity).addFunc(<I>() => () => ["xxx"]);
             link.implementation(<I>(b: Node<I>, bf: flatten.Func<I, string>) => {
                 b.should.equal(x);
@@ -78,13 +89,14 @@ describe("optimized.ts", function() {
     })
     describe("class Bag", function() {
         it("constructor()", () => {
-            const x = [one(1, 4).link(flatten.identity)];
+            const node = new Node(0, <R>(visitor: NodeVisitor<number, R>) => visitor.one(10));
+            const x = [node.link(flatten.identity)];
             const bag = new Bag(43, x);
             bag.id.should.equal(43);
             bag.array.should.equal(x);
         })
         it("groupBy()", () => {
-            const x = one(0, { a: 4, b: "hello" }).bag();
+            const x = one(0, { a: 4, b: "hello" });
             const toKey = (v: {a:number, b: string}) => v.a;
             const reduce = <T>(a: T, b: T) => a;
             const node = x.groupBy(1, toKey, reduce);
@@ -97,8 +109,8 @@ describe("optimized.ts", function() {
             });
         })
         it("product()", () => {
-            const a = one(0, 3).bag();
-            const b = one(1, "world").bag();
+            const a = one(0, 3);
+            const b = one(1, "world");
             const r = (x: number, y: string) => [{ a: x, b: y}];
             const p = a.product(2, b, r);
             check(p, {
@@ -110,24 +122,23 @@ describe("optimized.ts", function() {
             });
         })
         it("flatten()", () => {
-            const a = one(0, 9);
+            const a = one(123, 9);
             const f = (x: number) => [x * 2];
-            const r = a.bag().flatten(1, f);
+            const r = a.flatten(1, f);
             r.array[0].implementation((b: any, bf: any) => {
-                b.should.equal(a);
+                b.id.should.equal(123);
                 bf.should.equal(f);
             });
         })
         it("disjointUnion()", () => {
-            const aNode = one(0, 1);
-            const a = aNode.bag();
-            const b = one(1, 2).bag();
+            const a = one(101, 1);
+            const b = one(1, 2);
             const d = a.disjointUnion(2, b);
             d.array.should.deep.equal([a.array[0], b.array[0]]);
             const d2 = a.disjointUnion(3, a);
             d2.array.length.should.equal(1);
             d2.array[0].implementation((b: Node<number>, bf: flatten.Func<number, number>) => {
-                b.should.equal(aNode);
+                b.id.should.equal(101);
                 bf(10).should.deep.equal([10, 10]);
             });
         })

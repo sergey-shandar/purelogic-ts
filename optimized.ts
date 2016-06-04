@@ -36,9 +36,12 @@ export class Link<T> {
         }
         return this.implementation(visitor);
     }
+    /**
+     * nodes with the same ids are equal.
+     */
     nodeEqual<B>(b: Node<B>): boolean {
         function visitor<I>(a: Node<I>, f: flatten.Func<I, T>): boolean {
-            return (<any> b) === a;
+            return b.id === a.id;
         }
         return this.implementation(visitor);
     }
@@ -81,10 +84,10 @@ export class Bag<T> {
     }
 }
 
-export function input<T>(id: number): Node<T> {
-    return new Node(id, <R>(visitor: NodeVisitor<T, R>) => visitor.input());
+export function input<T>(id: number): Bag<T> {
+    return new Node(id, <R>(visitor: NodeVisitor<T, R>) => visitor.input()).bag();
 }
 
-export function one<T>(id: number, value: T): Node<T> {
-    return new Node(id, <R>(visitor: NodeVisitor<T, R>) => visitor.one(value));
+export function one<T>(id: number, value: T): Bag<T> {
+    return new Node(id, <R>(visitor: NodeVisitor<T, R>) => visitor.one(value)).bag();
 }
