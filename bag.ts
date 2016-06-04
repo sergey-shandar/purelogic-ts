@@ -13,7 +13,7 @@ export interface Visitor<T, R> {
     flatten<I>(input: Bag<I>, func: flatten.Func<I, T>): R;
     disjointUnion(a: Bag<T>, b: Bag<T>): R;
     one(value: T): R;
-    input(id: number): R;
+    input(): R;
     /**
      * LINQ: GroupBy
      */
@@ -31,17 +31,20 @@ export function one<T>(value: T): Bag<T> {
     return new Bag(<R>(visitor: Visitor<T, R>) => visitor.one(value));
 }
 
-let inputId = 0;
-
 export function input<T>(): Bag<T> {
-    const id = inputId;
-    ++inputId;
-    return new Bag(<R>(visitor: Visitor<T, R>) => visitor.input(id));
+    return new Bag(<R>(visitor: Visitor<T, R>) => visitor.input());
 }
+
+let bagCounter: number = 0;
 
 export class Bag<T> {
 
-    constructor(public implementation: Implementation<T>) { }
+    id: number;
+
+    constructor(public implementation: Implementation<T>) {
+        this.id = bagCounter;
+        ++bagCounter;
+    }
 
     /**
      * LINQ: SelectMany

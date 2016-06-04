@@ -11,7 +11,7 @@ interface Visitor<T> {
     input?: (id: number) => void;
     groupBy?: <K>(input: Bag.Bag<T>, toKey: (value: T) => K, reduce: (a: T, b: T) => T) => void;
     product?: <A, B>(a: Bag.Bag<A>, b: Bag.Bag<B>, func: (a: A, b: B) => T[]) => void;
- 
+
 }
 
 function check<T>(bag: Bag.Bag<T>, visitor: Visitor<T>) {
@@ -20,9 +20,14 @@ function check<T>(bag: Bag.Bag<T>, visitor: Visitor<T>) {
 
 describe("bag.ts", function() {
     it("one()", () => check(Bag.one(5), { one: x => x.should.equal(5) }));
-    it("input()", () => check(Bag.input<string>(), {
-        input: i => (typeof i).should.equal("number") 
-    }));
+    it("input()", () => {
+        const bag = Bag.input<string>()
+        const bag2 = Bag.one(8);
+        bag.id.should.equal(bag2.id - 1);
+        check(bag, {
+            input: () => null
+        })
+    });
     describe("class Bag", function() {
         it("flatten()", () => {
             const i = Bag.input<number>();
@@ -30,7 +35,7 @@ describe("bag.ts", function() {
             check(i.flatten(f), {
                 flatten: <I>(input: Bag.Bag<I>, func: (value: I) => number[]) => {
                     input.should.equal(i);
-                    func.should.equal(f); 
+                    func.should.equal(f);
                 }
             });
         });
@@ -47,26 +52,26 @@ describe("bag.ts", function() {
         it("groupBy()", () => {
             const a = Bag.one("Hello World!");
             const key = (x: string) => x;
-            const reduce = (a: string, b: string) => a; 
+            const reduce = (a: string, b: string) => a;
             check(a.groupBy(key, reduce), {
                 groupBy: (ax: any, keyx: any, reducex: any) =>  {
                     ax.should.equal(a);
                     keyx.should.equal(key);
                     reducex.should.equal(reduce);
-                } 
+                }
             });
         });
         it("product()", () => {
             const a = Bag.one(3);
             const b = Bag.one("Hello world!");
-            const f = (x: number, y: string) => [{ a: a, b: b }]; 
+            const f = (x: number, y: string) => [{ a: a, b: b }];
             check(a.product(b, f), {
                 product: (ax: any, bx: any, fx: any) => {
                     ax.should.equal(a);
                     bx.should.equal(b);
                     fx.should.equal(f);
                 }
-            }); 
+            });
         });
         it("map()", () => {
             const a = Bag.one(6);
@@ -85,7 +90,7 @@ describe("bag.ts", function() {
                     f({ a: 5, b: "net" }).should.deep.equal([{ a: 5, b: "net" }]);
                     f({ a: 0, b: "net" }).should.deep.equal([]);
                 }
-            }); 
+            });
         });
         it("compact()", () => Bag.one(0).compact());
         it("reduce()", () => {
@@ -93,12 +98,12 @@ describe("bag.ts", function() {
             const f = (x: { a: number, b: number }, y: { a: number, b: number }) => ({
                 a: x.a + y.b,
                 b: x.b + y.b,
-            }); 
+            });
             check(a.reduce(f), {
                 groupBy: (ax: any, kx: any, rx: any) => {
                     ax.should.equal(a);
                     chai.assert(kx(5) === null);
-                } 
+                }
             });
         });
         it("dif()", () => {
@@ -108,22 +113,22 @@ describe("bag.ts", function() {
                 groupBy: (
                     m: Bag.Bag<Bag.Dif<string>>,
                     kx: (v: Bag.Dif<string>) => string, rx: any) => {
-                            
+
                     kx(new Bag.Dif("hello", 1, 2)).should.equal("hello");
                     rx(new Bag.Dif("hello", 2, 3), new Bag.Dif("world", 4, 8)).should.deep
                         .equal(new Bag.Dif("hello", 6, 11));
-                    
+
                     check(m, {
                         disjointUnion: (ad, bd) => check(ad, {
                             flatten: (ax: any, f: any) => {
                                 ax.should.equal(a);
                                 f("hello").should.deep.equal(
                                     [new Bag.Dif("hello", 1, 0)]);
-                            },       
+                            },
                         }),
                     });
                 },
-            }); 
+            });
         });
     });
 });
