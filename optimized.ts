@@ -29,7 +29,10 @@ export class Link<T> {
     constructor(public implementation: LinkImplementation<T>) {}
     flatten<O>(func: flatten.Func<T, O>): Link<O> {
         function visitor<I>(b: Bag<I>, f: flatten.Func<I, T>): Link<O> {
-            return b.link(value => array.ref(f(value)).flatten(func));
+            const newFunc = f !== flatten.identity
+                ? (value: I) => array.ref(f(value)).flatten(func)
+                : <flatten.Func<I, O>> <any> func;
+            return b.link(newFunc);
         }
         return this.implementation(visitor);
     }

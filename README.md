@@ -35,3 +35,5 @@ See [lodash](https://lodash.com/docs) and [underscore](http://underscorejs.org/)
 
 - Don't use class inheritance. Use interfaces and sealed classes.
 - The project targets "ES6" because TypeScript 1.8 supports `async` only for "ES6" and above.
+- Keep object properties immutable, see also https://github.com/Microsoft/TypeScript/pull/6532
+- Keep object properties non-nullable, see also https://github.com/Microsoft/TypeScript/pull/7140
