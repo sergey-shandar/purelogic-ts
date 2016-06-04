@@ -49,6 +49,9 @@ export class Link<T> {
         }
         return this.implementation(visitor);
     }
+    links(): Links<T> {
+        return new Links([this]);
+    }
 }
 
 export class Links<T> {
@@ -77,7 +80,7 @@ export class Links<T> {
             }
             bLink.implementation(bVisitor);
         });
-        return null;
+        return new Links(aLinks.concat(bLinks));
     }
 }
 

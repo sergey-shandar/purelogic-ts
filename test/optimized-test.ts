@@ -62,5 +62,26 @@ describe("optimized.ts", function() {
             link.bagEqual(x).should.equal(true);
             link.bagEqual(one("hello")).should.equal(false);
         })
+        it("addFunc()", () => {
+            const x = one("something");
+            const link = x.identityLink().addFunc(<I>() => () => ["xxx"]);
+            link.implementation(<I>(b: Bag<I>, bf: flatten.Func<I, string>) => {
+                b.should.equal(x);
+                bf(<I> <any> "x").should.deep.equal(["x", "xxx"]);
+            });
+        })
+        it("links()", () => {
+           const x = one(4).identityLink();
+           x.links().array.should.deep.equal([x]);
+        });
+    })
+    describe("class Links", function() {
+        it("constructor()", () => {
+            const x = [one(4).identityLink()];
+            new Links(x).array.should.equal(x);
+        })
+        it("groupBy()", () => {
+            const x = [one(4).identityLink(), one(7).link(x => [x, x * 2])];
+        })
     })
 })
