@@ -6,19 +6,35 @@ export type ReduceFunc<T> = (a: T, b: T) => T;
 
 export type ProductFunc<A, B, O> = (a: A, b: B) => O[];
 
+export class Flatten<T, I> {
+    constructor(public input: Bag<I>, public func: flatten.Func<I, T>) {}
+}
+
+export class DisjointUnion<T> {
+    constructor(public a: Bag<T>, public b: Bag<T>) {}
+}
+
+export class GroupBy<T, K> {
+    constructor(public input: Bag<T>, public toKey: KeyFunc<T, K>, public reduce: ReduceFunc<T>) {}
+}
+
+export class Product<T, A, B> {
+    constructor(public a: Bag<A>, public b: Bag<B>, public func: ProductFunc<A, B, T>) {}
+}
+
 export interface Visitor<T, R> {
     /**
      * LINQ: SelectMany
      */
-    flatten<I>(input: Bag<I>, func: flatten.Func<I, T>): R;
-    disjointUnion(a: Bag<T>, b: Bag<T>): R;
+    flatten<I>(value: Flatten<T, I>): R;
+    disjointUnion(value: DisjointUnion<T>): R;
     one(value: T): R;
-    input(id: number): R;
+    input(): R;
     /**
      * LINQ: GroupBy
      */
-    groupBy<K>(input: Bag<T>, toKey: KeyFunc<T, K>, reduce: ReduceFunc<T>): R;
-    product<A, B>(a: Bag<A>, b: Bag<B>, func: ProductFunc<A, B, T>): R;
+    groupBy<K>(value: GroupBy<T, K>): R;
+    product<A, B>(value: Product<T, A, B>): R;
 }
 
 export type Implementation<T> = <R>(visitor: Visitor<T, R>) => R;
@@ -31,35 +47,40 @@ export function one<T>(value: T): Bag<T> {
     return new Bag(<R>(visitor: Visitor<T, R>) => visitor.one(value));
 }
 
-let inputId = 0;
-
 export function input<T>(): Bag<T> {
-    const id = inputId;
-    ++inputId;
-    return new Bag(<R>(visitor: Visitor<T, R>) => visitor.input(id));
+    return new Bag(<R>(visitor: Visitor<T, R>) => visitor.input());
 }
+
+let bagCounter: number = 0;
 
 export class Bag<T> {
 
-    constructor(public implementation: Implementation<T>) { }
+    id: number;
+
+    constructor(public implementation: Implementation<T>) {
+        this.id = bagCounter;
+        ++bagCounter;
+    }
 
     /**
      * LINQ: SelectMany
      */
     flatten<O>(func: flatten.Func<T, O>): Bag<O> {
-        return new Bag(<R>(visitor: Visitor<O, R>) => visitor.flatten(this, func));
+        return new Bag(<R>(visitor: Visitor<O, R>) => visitor.flatten(new Flatten(this, func)));
     }
     disjointUnion(b: Bag<T>): Bag<T> {
-        return new Bag(<R>(visitor: Visitor<T, R>) => visitor.disjointUnion(this, b));
+        return new Bag(<R>(visitor: Visitor<T, R>) =>
+            visitor.disjointUnion(new DisjointUnion(this, b)));
     }
     /**
      * LINQ: GroupBy
      */
     groupBy<K>(toKey: KeyFunc<T, K>, reduce: ReduceFunc<T>): Bag<T> {
-        return new Bag(<R>(visitor: Visitor<T, R>) => visitor.groupBy(this, toKey, reduce));
+        return new Bag(<R>(visitor: Visitor<T, R>) =>
+            visitor.groupBy(new GroupBy(this, toKey, reduce)));
     }
     product<B, O>(b: Bag<B>, func: ProductFunc<T, B, O>): Bag<O> {
-        return new Bag(<R>(visitor: Visitor<O, R>) => visitor.product(this, b, func));
+        return new Bag(<R>(visitor: Visitor<O, R>) => visitor.product(new Product(this, b, func)));
     }
 
     /**
