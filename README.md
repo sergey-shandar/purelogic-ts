@@ -1,6 +1,6 @@
 # purelogic-ts
 
-PureLogic-TS is [embedded DSL](https://en.wikipedia.org/wiki/Domain-specific_language#Usage_patterns) for describing [map-reduce](https://en.wikipedia.org/wiki/MapReduce) logic on [TypeScript](http://www.typescriptlang.org/).
+PureLogic-TS is an [embedded DSL](https://en.wikipedia.org/wiki/Domain-specific_language#Usage_patterns) for describing [map-reduce](https://en.wikipedia.org/wiki/MapReduce) logic on [TypeScript](http://www.typescriptlang.org/).
 
 [![Build Status](https://travis-ci.org/sergey-shandar/purelogic-ts.svg?branch=master)](https://travis-ci.org/sergey-shandar/purelogic-ts)
 
