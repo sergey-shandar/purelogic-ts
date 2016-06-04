@@ -14,25 +14,31 @@ export type NodeImplementation<T> = <R>(visitor: NodeVisitor<T, R>) => R;
 export class Node<T> {
     constructor(public id: number, public implementation: NodeImplementation<T>) { }
     link<O>(func: flatten.Func<T, O>): Link<O> {
-        return new Link(<R>(visitor: LinkVisitor<O, R>) => visitor(this, func));
+        const value = new LinkValue(this, func);
+        return new Link(<R>(visitor: LinkVisitor<O, R>) => visitor(value));
     }
     bag(): Bag<T> {
         return new Bag(this.id, [this.link(flatten.identity)]);
     }
 }
 
-export type LinkVisitor<T, R> = <I>(bag: Node<I>, func: flatten.Func<I, T>) => R;
+export class LinkValue<T, I> {
+    constructor(public node: Node<I>, public func: flatten.Func<I, T>) {}
+}
+
+export type LinkVisitor<T, R> = <I>(value: LinkValue<T, I>) => R;
 
 export type LinkImplementation<T> = <R>(visitor: LinkVisitor<T, R>) => R;
 
 export class Link<T> {
     constructor(public implementation: LinkImplementation<T>) {}
     flatten<O>(func: flatten.Func<T, O>): Link<O> {
-        function visitor<I>(b: Node<I>, f: flatten.Func<I, T>): Link<O> {
+        function visitor<I>(x: LinkValue<T, I>): Link<O> {
+            const f = x.func;
             const newFunc = f !== flatten.identity
                 ? (value: I) => array.ref(f(value)).flatten(func)
                 : <flatten.Func<I, O>> <any> func;
-            return b.link(newFunc);
+            return x.node.link(newFunc);
         }
         return this.implementation(visitor);
     }
@@ -40,15 +46,16 @@ export class Link<T> {
      * nodes with the same ids are equal.
      */
     nodeEqual<B>(b: Node<B>): boolean {
-        function visitor<I>(a: Node<I>, f: flatten.Func<I, T>): boolean {
-            return b.id === a.id;
+        function visitor<I>(link: LinkValue<T, I>): boolean {
+            return b.id === link.node.id;
         }
         return this.implementation(visitor);
     }
     addFunc(getFunc: <I>() => flatten.Func<I, T>): Link<T> {
-        function visitor<I>(a: Node<I>, f: flatten.Func<I, T>): Link<T> {
+        function visitor<I>(link: LinkValue<T, I>): Link<T> {
+            const f = link.func;
             const fNew = getFunc<I>();
-            return a.link(i => f(i).concat(fNew(i)));
+            return link.node.link(i => f(i).concat(fNew(i)));
         }
         return this.implementation(visitor);
     }
@@ -70,9 +77,9 @@ export class Bag<T> {
         this.array.forEach(aLink => aLinks.push(aLink));
         const bLinks: Link<T>[] = [];
         b.array.forEach(bLink => {
-            function bVisitor<B>(bBag: Node<B>, f: flatten.Func<B, T>): void {
-                const i = aLinks.findIndex(aLink => aLink.nodeEqual(bBag));
-                function getFunc<I>(): flatten.Func<I, T> { return <any> f; }
+            function bVisitor<B>(x: LinkValue<T, B>): void {
+                const i = aLinks.findIndex(aLink => aLink.nodeEqual(x.node));
+                function getFunc<I>(): flatten.Func<I, T> { return <any> x.func; }
                 bLinks.push(i !== -1
                     ? array.ref(aLinks).spliceOne(i).addFunc(getFunc)
                     : bLink
