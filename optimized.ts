@@ -73,7 +73,7 @@ export class Links<T> {
             function bVisitor<B>(bBag: Bag<B>, f: flatten.Func<B, T>): void {
                 const i = aLinks.findIndex(aLink => aLink.bagEqual(bBag));
                 function getFunc<I>(): flatten.Func<I, T> { return <any> f; }
-                bLinks.push(i !== undefined
+                bLinks.push(i !== -1
                     ? array.ref(aLinks).spliceOne(i).addFunc(getFunc)
                     : bLink
                 );

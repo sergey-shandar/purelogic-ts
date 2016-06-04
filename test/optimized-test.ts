@@ -81,7 +81,52 @@ describe("optimized.ts", function() {
             new Links(x).array.should.equal(x);
         })
         it("groupBy()", () => {
-            const x = [one(4).identityLink(), one(7).link(x => [x, x * 2])];
+            const x = one({ a: 4, b: "hello" }).identityLink().links();
+            const toKey = (v: {a:number, b: string}) => v.a;
+            const reduce = <T>(a: T, b: T) => a;
+            const bag = x.groupBy(toKey, reduce);
+            check(bag, {
+                groupBy: (links: any, k: any, r: any): void => {
+                    links.should.equal(x);
+                    k.should.equal(toKey);
+                    r.should.equal(reduce);
+                }
+            });
+        })
+        it("product()", () => {
+            const a = one(3).identityLink().links();
+            const b = one("world").identityLink().links();
+            const r = (x: number, y: string) => [{ a: x, b: y}];
+            const p = a.product(b, r);
+            check(p, {
+                product: (ax: any, bx: any, rx: any): void => {
+                    ax.should.equal(a);
+                    bx.should.equal(b);
+                    rx.should.equal(r);
+                }
+            });
+        })
+        it("flatten()", () => {
+            const a = one(9);
+            const f = (x: number) => [x * 2];
+            const r = a.identityLink().links().flatten(f);
+            r.array[0].implementation((b: any, bf: any) => {
+                b.should.equal(a);
+                bf.should.equal(f);
+            });
+        })
+        it("disjointUnion()", () => {
+            const bag = one(1);
+            const a = bag.identityLink();
+            const b = one(2).identityLink();
+            const d = a.links().disjointUnion(b.links());
+            d.array.should.deep.equal([a, b]);
+            const d2 = a.links().disjointUnion(a.links());
+            d2.array.length.should.equal(1);
+            d2.array[0].implementation((b: Bag<number>, bf: flatten.Func<number, number>) => {
+                b.should.equal(bag);
+                bf(10).should.deep.equal([10, 10]);
+            });
         })
     })
 })
