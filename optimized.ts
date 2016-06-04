@@ -16,8 +16,8 @@ export class Node<T> {
     link<O>(func: flatten.Func<T, O>): Link<O> {
         return new Link(<R>(visitor: LinkVisitor<O, R>) => visitor(this, func));
     }
-    identityLink(): Link<T> {
-        return this.link(flatten.identity);
+    bag(): Bag<T> {
+        return new Bag(this.id, [this.link(flatten.identity)]);
     }
 }
 
@@ -36,9 +36,12 @@ export class Link<T> {
         }
         return this.implementation(visitor);
     }
+    /**
+     * nodes with the same ids are equal.
+     */
     nodeEqual<B>(b: Node<B>): boolean {
         function visitor<I>(a: Node<I>, f: flatten.Func<I, T>): boolean {
-            return (<any> b) === a;
+            return b.id === a.id;
         }
         return this.implementation(visitor);
     }
@@ -49,23 +52,20 @@ export class Link<T> {
         }
         return this.implementation(visitor);
     }
-    bag(): Bag<T> {
-        return new Bag([this]);
-    }
 }
 
 export class Bag<T> {
-    constructor(public array: Link<T>[]) { }
+    constructor(public id: number, public array: Link<T>[]) { }
     groupBy<K>(id: number, toKey: KeyFunc<T, K>, reduce: ReduceFunc<T>): Node<T> {
         return new Node(id, <R>(visitor: NodeVisitor<T, R>) => visitor.groupBy(this, toKey, reduce));
     }
     product<B, O>(id: number, b: Bag<B>, func: ProductFunc<T, B, O>): Node<O> {
         return new Node(id, <R>(visitor: NodeVisitor<O, R>) => visitor.product(this, b, func));
     }
-    flatten<O>(func: flatten.Func<T, O>): Bag<O> {
-        return new Bag(this.array.map(link => link.flatten(func)));
+    flatten<O>(id: number, func: flatten.Func<T, O>): Bag<O> {
+        return new Bag(id, this.array.map(link => link.flatten(func)));
     }
-    disjointUnion(b: Bag<T>): Bag<T> {
+    disjointUnion(id: number, b: Bag<T>): Bag<T> {
         const aLinks: Link<T>[] = [];
         this.array.forEach(aLink => aLinks.push(aLink));
         const bLinks: Link<T>[] = [];
@@ -80,14 +80,14 @@ export class Bag<T> {
             }
             bLink.implementation(bVisitor);
         });
-        return new Bag(aLinks.concat(bLinks));
+        return new Bag(id, aLinks.concat(bLinks));
     }
 }
 
-export function input<T>(id: number): Node<T> {
-    return new Node(id, <R>(visitor: NodeVisitor<T, R>) => visitor.input());
+export function input<T>(id: number): Bag<T> {
+    return new Node(id, <R>(visitor: NodeVisitor<T, R>) => visitor.input()).bag();
 }
 
-export function one<T>(id: number, value: T): Node<T> {
-    return new Node(id, <R>(visitor: NodeVisitor<T, R>) => visitor.one(value));
+export function one<T>(id: number, value: T): Bag<T> {
+    return new Node(id, <R>(visitor: NodeVisitor<T, R>) => visitor.one(value)).bag();
 }
