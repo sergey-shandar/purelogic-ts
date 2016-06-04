@@ -3,7 +3,7 @@ import { KeyFunc, ReduceFunc, ProductFunc } from "./bag";
 import * as array from "./array";
 
 export interface NodeVisitor<T, R> {
-    input(id: number): R;
+    input(): R;
     one(value: T): R;
     groupBy<K>(inputs: Bag<T>, toKey: KeyFunc<T, K>, reduce: ReduceFunc<T>): R;
     product<A, B>(a: Bag<A>, b: Bag<B>, func: ProductFunc<A, B, T>): R;
@@ -12,7 +12,7 @@ export interface NodeVisitor<T, R> {
 export type NodeImplementation<T> = <R>(visitor: NodeVisitor<T, R>) => R;
 
 export class Node<T> {
-    constructor(public implementation: NodeImplementation<T>) { }
+    constructor(public id: number, public implementation: NodeImplementation<T>) { }
     link<O>(func: flatten.Func<T, O>): Link<O> {
         return new Link(<R>(visitor: LinkVisitor<O, R>) => visitor(this, func));
     }
@@ -56,11 +56,11 @@ export class Link<T> {
 
 export class Bag<T> {
     constructor(public array: Link<T>[]) { }
-    groupBy<K>(toKey: KeyFunc<T, K>, reduce: ReduceFunc<T>): Node<T> {
-        return new Node(<R>(visitor: NodeVisitor<T, R>) => visitor.groupBy(this, toKey, reduce));
+    groupBy<K>(id: number, toKey: KeyFunc<T, K>, reduce: ReduceFunc<T>): Node<T> {
+        return new Node(id, <R>(visitor: NodeVisitor<T, R>) => visitor.groupBy(this, toKey, reduce));
     }
-    product<B, O>(b: Bag<B>, func: ProductFunc<T, B, O>): Node<O> {
-        return new Node(<R>(visitor: NodeVisitor<O, R>) => visitor.product(this, b, func));
+    product<B, O>(id: number, b: Bag<B>, func: ProductFunc<T, B, O>): Node<O> {
+        return new Node(id, <R>(visitor: NodeVisitor<O, R>) => visitor.product(this, b, func));
     }
     flatten<O>(func: flatten.Func<T, O>): Bag<O> {
         return new Bag(this.array.map(link => link.flatten(func)));
@@ -85,9 +85,9 @@ export class Bag<T> {
 }
 
 export function input<T>(id: number): Node<T> {
-    return new Node(<R>(visitor: NodeVisitor<T, R>) => visitor.input(id));
+    return new Node(id, <R>(visitor: NodeVisitor<T, R>) => visitor.input());
 }
 
-export function one<T>(value: T): Node<T> {
-    return new Node(<R>(visitor: NodeVisitor<T, R>) => visitor.one(value));
+export function one<T>(id: number, value: T): Node<T> {
+    return new Node(id, <R>(visitor: NodeVisitor<T, R>) => visitor.one(value));
 }
