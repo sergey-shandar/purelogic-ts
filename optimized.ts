@@ -9,10 +9,10 @@ export interface BagVisitor<T, R> {
     product<A, B>(a: Links<A>, b: Links<B>, func: ProductFunc<A, B, T>): R;
 }
 
-export type BagImplementation<T> = <R>(visitor: BagVisitor<T, R>) => R;
+export type NodeImplementation<T> = <R>(visitor: BagVisitor<T, R>) => R;
 
-export class Bag<T> {
-    constructor(public implementation: BagImplementation<T>) { }
+export class Node<T> {
+    constructor(public implementation: NodeImplementation<T>) { }
     link<O>(func: flatten.Func<T, O>): Link<O> {
         return new Link(<R>(visitor: LinkVisitor<O, R>) => visitor(this, func));
     }
@@ -21,14 +21,14 @@ export class Bag<T> {
     }
 }
 
-export type LinkVisitor<T, R> = <I>(bag: Bag<I>, func: flatten.Func<I, T>) => R;
+export type LinkVisitor<T, R> = <I>(bag: Node<I>, func: flatten.Func<I, T>) => R;
 
 export type LinkImplementation<T> = <R>(visitor: LinkVisitor<T, R>) => R;
 
 export class Link<T> {
     constructor(public implementation: LinkImplementation<T>) {}
     flatten<O>(func: flatten.Func<T, O>): Link<O> {
-        function visitor<I>(b: Bag<I>, f: flatten.Func<I, T>): Link<O> {
+        function visitor<I>(b: Node<I>, f: flatten.Func<I, T>): Link<O> {
             const newFunc = f !== flatten.identity
                 ? (value: I) => array.ref(f(value)).flatten(func)
                 : <flatten.Func<I, O>> <any> func;
@@ -36,14 +36,14 @@ export class Link<T> {
         }
         return this.implementation(visitor);
     }
-    bagEqual<B>(b: Bag<B>): boolean {
-        function visitor<I>(a: Bag<I>, f: flatten.Func<I, T>): boolean {
+    bagEqual<B>(b: Node<B>): boolean {
+        function visitor<I>(a: Node<I>, f: flatten.Func<I, T>): boolean {
             return (<any> b) === a;
         }
         return this.implementation(visitor);
     }
     addFunc(getFunc: <I>() => flatten.Func<I, T>): Link<T> {
-        function visitor<I>(a: Bag<I>, f: flatten.Func<I, T>): Link<T> {
+        function visitor<I>(a: Node<I>, f: flatten.Func<I, T>): Link<T> {
             const fNew = getFunc<I>();
             return a.link(i => f(i).concat(fNew(i)));
         }
@@ -56,11 +56,11 @@ export class Link<T> {
 
 export class Links<T> {
     constructor(public array: Link<T>[]) { }
-    groupBy<K>(toKey: KeyFunc<T, K>, reduce: ReduceFunc<T>): Bag<T> {
-        return new Bag(<R>(visitor: BagVisitor<T, R>) => visitor.groupBy(this, toKey, reduce));
+    groupBy<K>(toKey: KeyFunc<T, K>, reduce: ReduceFunc<T>): Node<T> {
+        return new Node(<R>(visitor: BagVisitor<T, R>) => visitor.groupBy(this, toKey, reduce));
     }
-    product<B, O>(b: Links<B>, func: ProductFunc<T, B, O>): Bag<O> {
-        return new Bag(<R>(visitor: BagVisitor<O, R>) => visitor.product(this, b, func));
+    product<B, O>(b: Links<B>, func: ProductFunc<T, B, O>): Node<O> {
+        return new Node(<R>(visitor: BagVisitor<O, R>) => visitor.product(this, b, func));
     }
     flatten<O>(func: flatten.Func<T, O>): Links<O> {
         return new Links(this.array.map(link => link.flatten(func)));
@@ -70,7 +70,7 @@ export class Links<T> {
         this.array.forEach(aLink => aLinks.push(aLink));
         const bLinks: Link<T>[] = [];
         b.array.forEach(bLink => {
-            function bVisitor<B>(bBag: Bag<B>, f: flatten.Func<B, T>): void {
+            function bVisitor<B>(bBag: Node<B>, f: flatten.Func<B, T>): void {
                 const i = aLinks.findIndex(aLink => aLink.bagEqual(bBag));
                 function getFunc<I>(): flatten.Func<I, T> { return <any> f; }
                 bLinks.push(i !== -1
@@ -84,10 +84,10 @@ export class Links<T> {
     }
 }
 
-export function input<T>(id: number): Bag<T> {
-    return new Bag(<R>(visitor: BagVisitor<T, R>) => visitor.input(id));
+export function input<T>(id: number): Node<T> {
+    return new Node(<R>(visitor: BagVisitor<T, R>) => visitor.input(id));
 }
 
-export function one<T>(value: T): Bag<T> {
-    return new Bag(<R>(visitor: BagVisitor<T, R>) => visitor.one(value));
+export function one<T>(value: T): Node<T> {
+    return new Node(<R>(visitor: BagVisitor<T, R>) => visitor.one(value));
 }

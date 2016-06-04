@@ -1,5 +1,5 @@
 import "mocha";
-import { Bag, BagVisitor, Links, input, one } from "../optimized";
+import { Node, BagVisitor, Links, input, one } from "../optimized";
 import { ReduceFunc, KeyFunc, ProductFunc } from "../bag";
 import * as flatten from "../flatten";
 
@@ -10,7 +10,7 @@ interface OptionalBagVisitor<T> {
     product?: <A, B>(a: Links<A>, b: Links<B>, func: ProductFunc<A, B, T>) => void;
 }
 
-function check<T>(bag: Bag<T>, visitor: OptionalBagVisitor<T>) {
+function check<T>(bag: Node<T>, visitor: OptionalBagVisitor<T>) {
     bag.implementation(<BagVisitor<T, void>> visitor);
 }
 
@@ -26,7 +26,7 @@ describe("optimized.ts", function() {
             const a = one("Hello world!");
             const f = (s: string) => [s.indexOf("H")];
             const link = a.link(f);
-            link.implementation(<I>(b: Bag<I>, bf: flatten.Func<I, number>) => {
+            link.implementation(<I>(b: Node<I>, bf: flatten.Func<I, number>) => {
                 b.should.equal(a);
                 bf.should.equal(f);
             })
@@ -34,7 +34,7 @@ describe("optimized.ts", function() {
         it("identityLink()", () => {
             const a = one("Hello world!");
             const link = a.identityLink();
-            link.implementation(<I>(b: Bag<I>, bf: flatten.Func<I, string>) => {
+            link.implementation(<I>(b: Node<I>, bf: flatten.Func<I, string>) => {
                 b.should.equal(a);
                 bf.should.equal(flatten.identity);
             })
@@ -45,13 +45,13 @@ describe("optimized.ts", function() {
             const a = one(10);
             const f = (x: number) => [x, x * x];
             const link = a.identityLink().flatten(f);
-            link.implementation(<I>(b: Bag<I>, bf: flatten.Func<I, number>) => {
+            link.implementation(<I>(b: Node<I>, bf: flatten.Func<I, number>) => {
                 b.should.equal(a);
                 // an identity function should be removed
                 bf.should.equal(f);
             });
             const link2 = link.flatten(x => [x, x + 1]);
-            link2.implementation(<I>(b: Bag<I>, bf: flatten.Func<I, number>) => {
+            link2.implementation(<I>(b: Node<I>, bf: flatten.Func<I, number>) => {
                 b.should.equal(a);
                 bf(<I> <any> 10).should.deep.equal([10, 11, 100, 101]);
             });
@@ -65,7 +65,7 @@ describe("optimized.ts", function() {
         it("addFunc()", () => {
             const x = one("something");
             const link = x.identityLink().addFunc(<I>() => () => ["xxx"]);
-            link.implementation(<I>(b: Bag<I>, bf: flatten.Func<I, string>) => {
+            link.implementation(<I>(b: Node<I>, bf: flatten.Func<I, string>) => {
                 b.should.equal(x);
                 bf(<I> <any> "x").should.deep.equal(["x", "xxx"]);
             });
@@ -123,7 +123,7 @@ describe("optimized.ts", function() {
             d.array.should.deep.equal([a, b]);
             const d2 = a.links().disjointUnion(a.links());
             d2.array.length.should.equal(1);
-            d2.array[0].implementation((b: Bag<number>, bf: flatten.Func<number, number>) => {
+            d2.array[0].implementation((b: Node<number>, bf: flatten.Func<number, number>) => {
                 b.should.equal(bag);
                 bf(10).should.deep.equal([10, 10]);
             });
