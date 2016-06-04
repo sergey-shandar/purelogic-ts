@@ -7,19 +7,29 @@ export type ReduceFunc<T> = (a: T, b: T) => T;
 export type ProductFunc<A, B, O> = (a: A, b: B) => O[];
 
 export class Flatten<T, I> {
-    constructor(public input: Bag<I>, public func: flatten.Func<I, T>) {}
+    constructor(
+        public input: Bag<I>,
+        public func: flatten.Func<I, T>) {}
 }
 
 export class DisjointUnion<T> {
-    constructor(public a: Bag<T>, public b: Bag<T>) {}
+    constructor(
+        public a: Bag<T>,
+        public b: Bag<T>) {}
 }
 
 export class GroupBy<T, K> {
-    constructor(public input: Bag<T>, public toKey: KeyFunc<T, K>, public reduce: ReduceFunc<T>) {}
+    constructor(
+        public input: Bag<T>,
+        public toKey: KeyFunc<T, K>,
+        public reduce: ReduceFunc<T>) {}
 }
 
 export class Product<T, A, B> {
-    constructor(public a: Bag<A>, public b: Bag<B>, public func: ProductFunc<A, B, T>) {}
+    constructor(
+        public a: Bag<A>,
+        public b: Bag<B>,
+        public func: ProductFunc<A, B, T>) {}
 }
 
 export interface Visitor<T, R> {
