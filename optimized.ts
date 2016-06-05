@@ -11,7 +11,11 @@ export interface NodeVisitor<T, R> {
 
 export type NodeImplementation<T> = <R>(visitor: NodeVisitor<T, R>) => R;
 
-export class Node<T> {
+export interface NodeBase {
+    id: number;
+}
+
+export class Node<T> implements NodeBase {
     constructor(public id: number, public implementation: NodeImplementation<T>) { }
     link<O>(func: flatten.Func<T, O>): Link<O> {
         const value = new LinkValue(this, func);
@@ -30,8 +34,15 @@ export type LinkVisitor<T, R> = <I>(value: LinkValue<T, I>) => R;
 
 export type LinkImplementation<T> = <R>(visitor: LinkVisitor<T, R>) => R;
 
-export class Link<T> {
-    constructor(public implementation: LinkImplementation<T>) {}
+export interface LinkBase {
+    node: NodeBase;
+}
+
+export class Link<T> implements LinkBase {
+    node: NodeBase;
+    constructor(public implementation: LinkImplementation<T>) {
+        this.node = implementation(<I>(x: LinkValue<T, I>) => x.node);
+    }
     flatten<O>(func: flatten.Func<T, O>): Link<O> {
         function visitor<I>(x: LinkValue<T, I>): Link<O> {
             const f = x.func;
@@ -39,15 +50,6 @@ export class Link<T> {
                 ? (value: I) => array.ref(f(value)).flatten(func)
                 : <flatten.Func<I, O>> <any> func;
             return x.node.link(newFunc);
-        }
-        return this.implementation(visitor);
-    }
-    /**
-     * nodes with the same ids are equal.
-     */
-    nodeEqual<B>(b: Node<B>): boolean {
-        function visitor<I>(link: LinkValue<T, I>): boolean {
-            return b.id === link.node.id;
         }
         return this.implementation(visitor);
     }
@@ -78,7 +80,7 @@ export class Bag<T> {
         const bLinks: Link<T>[] = [];
         b.array.forEach(bLink => {
             function bVisitor<B>(x: LinkValue<T, B>): void {
-                const i = aLinks.findIndex(aLink => aLink.nodeEqual(x.node));
+                const i = aLinks.findIndex(aLink => aLink.node.id === x.node.id);
                 function getFunc<I>(): flatten.Func<I, T> { return <any> x.func; }
                 bLinks.push(i !== -1
                     ? array.ref(aLinks).spliceOne(i).addFunc(getFunc)

@@ -69,15 +69,6 @@ describe("optimized.ts", function() {
                 x.func(<I> <any> 10).should.deep.equal([10, 11, 100, 101]);
             });
         })
-        it("nodeEqual()", () => {
-            const x = new Node(0, <R>(visitor: NodeVisitor<string, R>) => visitor.input());
-            const x1 = new Node(0, <R>(visitor: NodeVisitor<string, R>) => visitor.input());
-            const y = new Node(1, <R>(visitor: NodeVisitor<string, R>) => visitor.input());
-            const link = x.link(v => [v, v + v]);
-            link.nodeEqual(x).should.equal(true);
-            link.nodeEqual(x1).should.equal(true);
-            link.nodeEqual(y).should.equal(false);
-        })
         it("addFunc()", () => {
             const x = new Node(0, <R>(visitor: NodeVisitor<string, R>) => visitor.one("something"));
             const link = x.link(flatten.identity).addFunc(<I>() => () => ["xxx"]);
