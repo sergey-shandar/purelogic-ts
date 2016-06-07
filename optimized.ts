@@ -2,81 +2,82 @@ import * as flatten from "./flatten";
 import { KeyFunc, ReduceFunc, ProductFunc } from "./bag";
 import * as array from "./array";
 
-export interface BagVisitor<T, R> {
-    input(id: number): R;
+export interface NodeVisitor<T, R> {
+    input(): R;
     one(value: T): R;
-    groupBy<K>(inputs: Links<T>, toKey: KeyFunc<T, K>, reduce: ReduceFunc<T>): R;
-    product<A, B>(a: Links<A>, b: Links<B>, func: ProductFunc<A, B, T>): R;
+    groupBy<K>(inputs: Bag<T>, toKey: KeyFunc<T, K>, reduce: ReduceFunc<T>): R;
+    product<A, B>(a: Bag<A>, b: Bag<B>, func: ProductFunc<A, B, T>): R;
 }
 
-export type BagImplementation<T> = <R>(visitor: BagVisitor<T, R>) => R;
+export type NodeImplementation<T> = <R>(visitor: NodeVisitor<T, R>) => R;
 
-export class Bag<T> {
-    constructor(public implementation: BagImplementation<T>) { }
+export class Node<T> {
+    constructor(public id: number, public implementation: NodeImplementation<T>) { }
     link<O>(func: flatten.Func<T, O>): Link<O> {
-        return new Link(<R>(visitor: LinkVisitor<O, R>) => visitor(this, func));
+        const value = new LinkValue(this, func);
+        return new Link(<R>(visitor: LinkVisitor<O, R>) => visitor(value));
     }
-    identityLink(): Link<T> {
-        return this.link(flatten.identity);
+    bag(): Bag<T> {
+        return new Bag(this.id, [this.link(flatten.identity)]);
     }
 }
 
-export type LinkVisitor<T, R> = <I>(bag: Bag<I>, func: flatten.Func<I, T>) => R;
+export class LinkValue<T, I> {
+    constructor(public node: Node<I>, public func: flatten.Func<I, T>) {}
+}
+
+export type LinkVisitor<T, R> = <I>(value: LinkValue<T, I>) => R;
 
 export type LinkImplementation<T> = <R>(visitor: LinkVisitor<T, R>) => R;
 
 export class Link<T> {
     constructor(public implementation: LinkImplementation<T>) {}
+    nodeId(): number {
+        return this.implementation(<I>(x: LinkValue<T, I>) => x.node.id);
+    }
     flatten<O>(func: flatten.Func<T, O>): Link<O> {
-        function visitor<I>(b: Bag<I>, f: flatten.Func<I, T>): Link<O> {
+        function visitor<I>(x: LinkValue<T, I>): Link<O> {
+            const f = x.func;
             const newFunc = f !== flatten.identity
                 ? (value: I) => array.ref(f(value)).flatten(func)
                 : <flatten.Func<I, O>> <any> func;
-            return b.link(newFunc);
-        }
-        return this.implementation(visitor);
-    }
-    bagEqual<B>(b: Bag<B>): boolean {
-        function visitor<I>(a: Bag<I>, f: flatten.Func<I, T>): boolean {
-            return (<any> b) === a;
+            return x.node.link(newFunc);
         }
         return this.implementation(visitor);
     }
     addFunc(getFunc: <I>() => flatten.Func<I, T>): Link<T> {
-        function visitor<I>(a: Bag<I>, f: flatten.Func<I, T>): Link<T> {
+        function visitor<I>(link: LinkValue<T, I>): Link<T> {
+            const f = link.func;
             const fNew = getFunc<I>();
-            return a.link(i => f(i).concat(fNew(i)));
+            return link.node.link(i => f(i).concat(fNew(i)));
         }
         return this.implementation(visitor);
     }
-    links(): Links<T> {
-        return new Links([this]);
-    }
 }
 
-export class Links<T> {
+export class Bag<T> {
     /**
      * The constructor should be private
      * https://github.com/Microsoft/TypeScript/pull/6885
      */
-    constructor(public array: Link<T>[]) { }
-    groupBy<K>(toKey: KeyFunc<T, K>, reduce: ReduceFunc<T>): Bag<T> {
-        return new Bag(<R>(visitor: BagVisitor<T, R>) => visitor.groupBy(this, toKey, reduce));
+    constructor(public id: number, public array: Link<T>[]) { }
+    groupBy<K>(id: number, toKey: KeyFunc<T, K>, reduce: ReduceFunc<T>): Node<T> {
+        return new Node(id, <R>(visitor: NodeVisitor<T, R>) => visitor.groupBy(this, toKey, reduce));
     }
-    product<B, O>(b: Links<B>, func: ProductFunc<T, B, O>): Bag<O> {
-        return new Bag(<R>(visitor: BagVisitor<O, R>) => visitor.product(this, b, func));
+    product<B, O>(id: number, b: Bag<B>, func: ProductFunc<T, B, O>): Node<O> {
+        return new Node(id, <R>(visitor: NodeVisitor<O, R>) => visitor.product(this, b, func));
     }
-    flatten<O>(func: flatten.Func<T, O>): Links<O> {
-        return new Links(this.array.map(link => link.flatten(func)));
+    flatten<O>(id: number, func: flatten.Func<T, O>): Bag<O> {
+        return new Bag(id, this.array.map(link => link.flatten(func)));
     }
-    disjointUnion(b: Links<T>): Links<T> {
+    disjointUnion(id: number, b: Bag<T>): Bag<T> {
         const aLinks: Link<T>[] = [];
         this.array.forEach(aLink => aLinks.push(aLink));
         const bLinks: Link<T>[] = [];
         b.array.forEach(bLink => {
-            function bVisitor<B>(bBag: Bag<B>, f: flatten.Func<B, T>): void {
-                const i = aLinks.findIndex(aLink => aLink.bagEqual(bBag));
-                function getFunc<I>(): flatten.Func<I, T> { return <any> f; }
+            function bVisitor<B>(x: LinkValue<T, B>): void {
+                const i = aLinks.findIndex(aLink => aLink.nodeId() === x.node.id);
+                function getFunc<I>(): flatten.Func<I, T> { return <any> x.func; }
                 bLinks.push(i !== -1
                     ? array.ref(aLinks).spliceOne(i).addFunc(getFunc)
                     : bLink
@@ -84,14 +85,14 @@ export class Links<T> {
             }
             bLink.implementation(bVisitor);
         });
-        return new Links(aLinks.concat(bLinks));
+        return new Bag(id, aLinks.concat(bLinks));
     }
 }
 
 export function input<T>(id: number): Bag<T> {
-    return new Bag(<R>(visitor: BagVisitor<T, R>) => visitor.input(id));
+    return new Node(id, <R>(visitor: NodeVisitor<T, R>) => visitor.input()).bag();
 }
 
-export function one<T>(value: T): Bag<T> {
-    return new Bag(<R>(visitor: BagVisitor<T, R>) => visitor.one(value));
+export function one<T>(id: number, value: T): Bag<T> {
+    return new Node(id, <R>(visitor: NodeVisitor<T, R>) => visitor.one(value)).bag();
 }
