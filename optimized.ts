@@ -12,7 +12,7 @@ export interface NodeVisitor<T, R> {
 export type NodeImplementation<T> = <R>(visitor: NodeVisitor<T, R>) => R;
 
 export class Node<T> {
-    constructor(public id: number, public implementation: NodeImplementation<T>) { }
+    constructor(public id: number, public implementation: NodeImplementation<T>) {}
     link<O>(func: flatten.Func<T, O>): Link<O> {
         const value = new LinkValue(this, func);
         return new Link(<R>(visitor: LinkVisitor<O, R>) => visitor(value));
