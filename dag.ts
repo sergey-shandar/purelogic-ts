@@ -1,11 +1,12 @@
 import * as Optimized from "./optimized";
 import * as Bag from "./bag";
 
-class Dag {
-    private map: { [id: number]: any } = {};
+export class Dag {
+    private map: { [id: string]: any } = {};
     public get<T>(bag: Bag.Bag<T>): Optimized.Bag<T> {
         const id = bag.id;
-        const cached = this.map[id];
+        const idStr = id.toString();
+        const cached = this.map[idStr];
         if (cached !== undefined) {
             return cached;
         }
@@ -31,7 +32,7 @@ class Dag {
             }
         }
         const result = bag.implementation(new Visitor());
-        this.map[id] = result;
+        this.map[idStr] = result;
         return result;
     }
 }
