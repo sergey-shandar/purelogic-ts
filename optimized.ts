@@ -11,11 +11,7 @@ export interface NodeVisitor<T, R> {
 
 export type NodeImplementation<T> = <R>(visitor: NodeVisitor<T, R>) => R;
 
-export interface NodeBase {
-    id: number;
-}
-
-export class Node<T> implements NodeBase {
+export class Node<T> {
     constructor(public id: number, public implementation: NodeImplementation<T>) { }
     link<O>(func: flatten.Func<T, O>): Link<O> {
         const value = new LinkValue(this, func);
@@ -34,14 +30,10 @@ export type LinkVisitor<T, R> = <I>(value: LinkValue<T, I>) => R;
 
 export type LinkImplementation<T> = <R>(visitor: LinkVisitor<T, R>) => R;
 
-export interface LinkBase {
-    node: NodeBase;
-}
-
-export class Link<T> implements LinkBase {
-    node: NodeBase;
-    constructor(public implementation: LinkImplementation<T>) {
-        this.node = implementation(<I>(x: LinkValue<T, I>) => x.node);
+export class Link<T> {
+    constructor(public implementation: LinkImplementation<T>) {}
+    nodeId(): number {
+        return this.implementation(<I>(x: LinkValue<T, I>) => x.node.id);
     }
     flatten<O>(func: flatten.Func<T, O>): Link<O> {
         function visitor<I>(x: LinkValue<T, I>): Link<O> {
@@ -80,7 +72,7 @@ export class Bag<T> {
         const bLinks: Link<T>[] = [];
         b.array.forEach(bLink => {
             function bVisitor<B>(x: LinkValue<T, B>): void {
-                const i = aLinks.findIndex(aLink => aLink.node.id === x.node.id);
+                const i = aLinks.findIndex(aLink => aLink.nodeId() === x.node.id);
                 function getFunc<I>(): flatten.Func<I, T> { return <any> x.func; }
                 bLinks.push(i !== -1
                     ? array.ref(aLinks).spliceOne(i).addFunc(getFunc)

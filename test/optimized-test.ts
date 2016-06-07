@@ -54,6 +54,9 @@ describe("optimized.ts", function() {
         })
     })
     describe("class Link", function() {
+        it("nodeId()", () => {
+            one(42, "hello world").array[0].nodeId().should.equal(42);
+        })
         it("flatten()", () => {
             const a = new Node(0, <R>(visitor: NodeVisitor<number, R>) => visitor.one(10));
             const f = (x: number) => [x, x * x];
