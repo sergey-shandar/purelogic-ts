@@ -12,7 +12,7 @@ export interface NodeVisitor<T, R> {
 export type NodeImplementation<T> = <R>(visitor: NodeVisitor<T, R>) => R;
 
 export class Node<T> {
-    constructor(public id: number, public implementation: NodeImplementation<T>) { }
+    constructor(public id: number, public implementation: NodeImplementation<T>) {}
     link<O>(func: flatten.Func<T, O>): Link<O> {
         const value = new LinkValue(this, func);
         return new Link(<R>(visitor: LinkVisitor<O, R>) => visitor(value));
@@ -61,11 +61,15 @@ export class Bag<T> {
      * https://github.com/Microsoft/TypeScript/pull/6885
      */
     constructor(public id: number, public array: Link<T>[]) { }
-    groupBy<K>(id: number, toKey: KeyFunc<T, K>, reduce: ReduceFunc<T>): Node<T> {
-        return new Node(id, <R>(visitor: NodeVisitor<T, R>) => visitor.groupBy(this, toKey, reduce));
+    groupBy<K>(id: number, toKey: KeyFunc<T, K>, reduce: ReduceFunc<T>): Bag<T> {
+        return new Node(
+                id,
+                <R>(visitor: NodeVisitor<T, R>) => visitor.groupBy(this, toKey, reduce))
+            .bag();
     }
-    product<B, O>(id: number, b: Bag<B>, func: ProductFunc<T, B, O>): Node<O> {
-        return new Node(id, <R>(visitor: NodeVisitor<O, R>) => visitor.product(this, b, func));
+    product<B, O>(id: number, b: Bag<B>, func: ProductFunc<T, B, O>): Bag<O> {
+        return new Node(id, <R>(visitor: NodeVisitor<O, R>) => visitor.product(this, b, func))
+            .bag();
     }
     flatten<O>(id: number, func: flatten.Func<T, O>): Bag<O> {
         return new Bag(id, this.array.map(link => link.flatten(func)));

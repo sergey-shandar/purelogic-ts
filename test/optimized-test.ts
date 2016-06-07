@@ -93,13 +93,15 @@ describe("optimized.ts", function() {
             const x = one(0, { a: 4, b: "hello" });
             const toKey = (v: {a:number, b: string}) => v.a;
             const reduce = <T>(a: T, b: T) => a;
-            const node = x.groupBy(1, toKey, reduce);
-            check(node, {
-                groupBy: (links: any, k: any, r: any): void => {
-                    links.should.equal(x);
-                    k.should.equal(toKey);
-                    r.should.equal(reduce);
-                }
+            const bag = x.groupBy(1, toKey, reduce);
+            bag.array[0].implementation(<I>(link: LinkValue<{a:number, b: string}, I>) => {
+                check(link.node, {
+                    groupBy: (links: any, k: any, r: any): void => {
+                        links.should.equal(x);
+                        k.should.equal(toKey);
+                        r.should.equal(reduce);
+                    }
+                });
             });
         })
         it("product()", () => {
@@ -107,12 +109,14 @@ describe("optimized.ts", function() {
             const b = one(1, "world");
             const r = (x: number, y: string) => [{ a: x, b: y}];
             const p = a.product(2, b, r);
-            check(p, {
-                product: (ax: any, bx: any, rx: any): void => {
-                    ax.should.equal(a);
-                    bx.should.equal(b);
-                    rx.should.equal(r);
-                }
+            p.array[0].implementation(<I>(x: LinkValue<{a:number, b: string}, I>) => {
+                check(x.node, {
+                    product: (ax: any, bx: any, rx: any): void => {
+                        ax.should.equal(a);
+                        bx.should.equal(b);
+                        rx.should.equal(r);
+                    }
+                });
             });
         })
         it("flatten()", () => {
