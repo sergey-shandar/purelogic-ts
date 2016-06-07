@@ -26,7 +26,8 @@ See [lodash](https://lodash.com/docs) and [underscore](http://underscorejs.org/)
 
 ## Optional
 
-- Visual Studio Code
+- [Visual Studio Code](https://www.visualstudio.com/products/code-vs)
+- TypeScript `npm install typescript -g`
 
 ## Getting Started
 
