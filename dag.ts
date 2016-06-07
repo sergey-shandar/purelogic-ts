@@ -5,12 +5,11 @@ export class Dag {
     private map: { [id: string]: any } = {};
     public get<T>(bag: Bag.Bag<T>): Optimized.Bag<T> {
         const id = bag.id;
-        const idStr = id.toString();
-        const cached = this.map[idStr];
+        const cached = this.map[id];
         if (cached !== undefined) {
             return cached;
         }
-        const getOpimized = this.get;
+        const getOpimized = <I>(b: Bag.Bag<I>) => this.get(b);
         class Visitor implements Bag.Visitor<T, Optimized.Bag<T>> {
             flatten<I>(value: Bag.Flatten<T, I>): Optimized.Bag<T> {
                 return getOpimized(value.input).flatten(id, value.func);
@@ -32,7 +31,7 @@ export class Dag {
             }
         }
         const result = bag.implementation(new Visitor());
-        this.map[idStr] = result;
+        this.map[id] = result;
         return result;
     }
 }
