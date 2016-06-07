@@ -65,10 +65,10 @@ let bagCounter: number = 0;
 
 export class Bag<T> {
 
-    id: number;
+    id: string;
 
     constructor(public implementation: Implementation<T>) {
-        this.id = bagCounter;
+        this.id = bagCounter.toString();
         ++bagCounter;
     }
 

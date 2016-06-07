@@ -12,7 +12,7 @@ export interface NodeVisitor<T, R> {
 export type NodeImplementation<T> = <R>(visitor: NodeVisitor<T, R>) => R;
 
 export class Node<T> {
-    constructor(public id: number, public implementation: NodeImplementation<T>) {}
+    constructor(public id: string, public implementation: NodeImplementation<T>) {}
     link<O>(func: flatten.Func<T, O>): Link<O> {
         const value = new LinkValue(this, func);
         return new Link(<R>(visitor: LinkVisitor<O, R>) => visitor(value));
@@ -32,7 +32,7 @@ export type LinkImplementation<T> = <R>(visitor: LinkVisitor<T, R>) => R;
 
 export class Link<T> {
     constructor(public implementation: LinkImplementation<T>) {}
-    nodeId(): number {
+    nodeId(): string {
         return this.implementation(<I>(x: LinkValue<T, I>) => x.node.id);
     }
     flatten<O>(func: flatten.Func<T, O>): Link<O> {
@@ -60,21 +60,21 @@ export class Bag<T> {
      * The constructor should be private
      * https://github.com/Microsoft/TypeScript/pull/6885
      */
-    constructor(public id: number, public array: Link<T>[]) { }
-    groupBy<K>(id: number, toKey: KeyFunc<T, K>, reduce: ReduceFunc<T>): Bag<T> {
+    constructor(public id: string, public array: Link<T>[]) { }
+    groupBy<K>(id: string, toKey: KeyFunc<T, K>, reduce: ReduceFunc<T>): Bag<T> {
         return new Node(
                 id,
                 <R>(visitor: NodeVisitor<T, R>) => visitor.groupBy(this, toKey, reduce))
             .bag();
     }
-    product<B, O>(id: number, b: Bag<B>, func: ProductFunc<T, B, O>): Bag<O> {
+    product<B, O>(id: string, b: Bag<B>, func: ProductFunc<T, B, O>): Bag<O> {
         return new Node(id, <R>(visitor: NodeVisitor<O, R>) => visitor.product(this, b, func))
             .bag();
     }
-    flatten<O>(id: number, func: flatten.Func<T, O>): Bag<O> {
+    flatten<O>(id: string, func: flatten.Func<T, O>): Bag<O> {
         return new Bag(id, this.array.map(link => link.flatten(func)));
     }
-    disjointUnion(id: number, b: Bag<T>): Bag<T> {
+    disjointUnion(id: string, b: Bag<T>): Bag<T> {
         const aLinks: Link<T>[] = [];
         this.array.forEach(aLink => aLinks.push(aLink));
         const bLinks: Link<T>[] = [];
@@ -93,10 +93,10 @@ export class Bag<T> {
     }
 }
 
-export function input<T>(id: number): Bag<T> {
+export function input<T>(id: string): Bag<T> {
     return new Node(id, <R>(visitor: NodeVisitor<T, R>) => visitor.input()).bag();
 }
 
-export function one<T>(id: number, value: T): Bag<T> {
+export function one<T>(id: string, value: T): Bag<T> {
     return new Node(id, <R>(visitor: NodeVisitor<T, R>) => visitor.one(value)).bag();
 }
