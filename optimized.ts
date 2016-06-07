@@ -56,6 +56,10 @@ export class Link<T> {
 }
 
 export class Bag<T> {
+    /**
+     * The constructor should be private
+     * https://github.com/Microsoft/TypeScript/pull/6885
+     */
     constructor(public id: string, public array: Link<T>[]) { }
     groupBy<K>(id: string, toKey: KeyFunc<T, K>, reduce: ReduceFunc<T>): Bag<T> {
         return new Node(
