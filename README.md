@@ -1,6 +1,9 @@
 # purelogic-ts
 
-PureLogic-TS is an [embedded DSL](https://en.wikipedia.org/wiki/Domain-specific_language#Usage_patterns) for describing [map-reduce](https://en.wikipedia.org/wiki/MapReduce) logic on [TypeScript](http://www.typescriptlang.org/).
+PureLogic-TS is an 
+[embedded DSL](https://en.wikipedia.org/wiki/Domain-specific_language#Usage_patterns) for describing
+[map-reduce](https://en.wikipedia.org/wiki/MapReduce) logic on 
+[TypeScript](http://www.typescriptlang.org/).
 
 [![Build Status](https://travis-ci.org/sergey-shandar/purelogic-ts.svg?branch=master)](https://travis-ci.org/sergey-shandar/purelogic-ts)
 
@@ -36,7 +39,7 @@ See [lodash](https://lodash.com/docs) and [underscore](http://underscorejs.org/)
 
 ## Cloud9
 
-Run `nvm install 6.2 && nvm use 6.2`.
+Run `nvm install 6.2 && nvm use 6.2` in [Cloud9](https://c9.io) workspace.
 
 ## Conventions And Rules
 
