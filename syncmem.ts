@@ -1,8 +1,10 @@
-import * as bag from "./bag";
-import * as dag from "./dag";
+import * as B from "./bag";
+import * as D from "./dag";
 
 class SyncMem {
-    constructor(private d: dag.Dag) {}
-    set<T>(input: Bag<T>, array: T[]): void {}
-    get<T>(b: Bag<T>): T[] {}
+    private _dag: D.Dag = new D.Dag();
+    set<T>(input: B.Bag<T>, array: T[]): void {
+        const optimizedBag = this._dag.get();
+    }
+    get<T>(b: B.Bag<T>): T[] {}
 }
