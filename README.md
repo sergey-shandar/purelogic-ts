@@ -48,5 +48,6 @@ Run `nvm install 6.2 && nvm use 6.2`.
   - Safari 9 (OS X 10.11 El Capitan),
   - iOS 9 (iPhone 4S+).
   - Node 6+,
+- Print margin column (line width) is 80 symbols. 
 - Keep object properties immutable, see also https://github.com/Microsoft/TypeScript/pull/6532
 - Keep object properties non-nullable, see also https://github.com/Microsoft/TypeScript/pull/7140
