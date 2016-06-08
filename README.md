@@ -34,6 +34,10 @@ See [lodash](https://lodash.com/docs) and [underscore](http://underscorejs.org/)
 - install dependencies `npm install`.
 - run unit test and coverage `npm test`.
 
+## Cloud9
+
+Run `nvm install 6.2 && nvm use 6.2`.
+
 ## Conventions And Rules
 
 - Don't use class inheritance. Use interfaces and sealed classes.
