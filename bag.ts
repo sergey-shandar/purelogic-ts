@@ -112,7 +112,7 @@ export class Bag<T> {
      * LINQ: Accumulate
      */
     reduce(func: ReduceFunc<T>): Bag<T> {
-        return this.groupBy(() => null, func);
+        return this.groupBy(() => "", func);
     }
     dif(b: Bag<T>): Bag<Dif<T>> {
         const toDif = (bag: Bag<T>, a: number, b: number) =>

@@ -96,7 +96,7 @@ describe("bag.ts", function() {
             check(a.reduce(f), {
                 groupBy: (x: Bag.GroupBy<any>) => {
                     x.input.should.equal(a);
-                    chai.assert(x.toKey(5) === null);
+                    chai.assert(x.toKey(5) === "");
                 }
             });
         });
