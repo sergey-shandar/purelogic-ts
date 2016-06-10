@@ -11,6 +11,11 @@ PureLogic-TS is an
 
 PureLogic for TypeScript
 
+## Data And Operation Requirements
+
+- Serializable. All data should be serializable.
+- Immutable. All data operations (functions) should not change input data.
+
 ## Bag Types
 
 - Input
