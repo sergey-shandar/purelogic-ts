@@ -83,8 +83,15 @@ class SyncMem {
             groupBy<K>(
                 input: O.Bag<T>, toKey: B.KeyFunc<T, K>, reduce: B.ReduceFunc<T>
             ): LazyArray<T> {
-                const array = get(input);
-                return null;
+                const map = new Map<K, T>();
+                const inputLazyArray = get(input);
+                return () => {
+                    inputLazyArray().forEach(value => {
+                        const key = toKey(value);
+                        const current = map.get(key);
+                    });
+                    return null;
+                };
             }
 
             product<A, B>(
