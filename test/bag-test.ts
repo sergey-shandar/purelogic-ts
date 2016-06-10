@@ -9,7 +9,7 @@ interface Visitor<T> {
     disjointUnion?: (x: Bag.DisjointUnion<T>) => void;
     one?: (value: T) => void;
     input?: (id: number) => void;
-    groupBy?: <K>(x: Bag.GroupBy<T, K>) => void;
+    groupBy?: (x: Bag.GroupBy<T>) => void;
     product?: <A, B>(x: Bag.Product<T, A, B>) => void;
 
 }
@@ -52,7 +52,7 @@ describe("bag.ts", function() {
             const key = (x: string) => x;
             const reduce = (a: string, b: string) => a;
             check(a.groupBy(key, reduce), {
-                groupBy: <K>(x: Bag.GroupBy<string, K>) =>  {
+                groupBy: (x: Bag.GroupBy<string>) =>  {
                     x.should.deep.equal(new Bag.GroupBy(a, key, reduce));
                 }
             });
@@ -94,7 +94,7 @@ describe("bag.ts", function() {
                 b: x.b + y.b,
             });
             check(a.reduce(f), {
-                groupBy: (x: Bag.GroupBy<any, any>) => {
+                groupBy: (x: Bag.GroupBy<any>) => {
                     x.input.should.equal(a);
                     chai.assert(x.toKey(5) === null);
                 }
@@ -104,9 +104,9 @@ describe("bag.ts", function() {
             const a = Bag.one("hello");
             const b = Bag.one("world");
             check(a.dif(b), {
-                groupBy: (x: Bag.GroupBy<any, any>) => {
+                groupBy: (x: Bag.GroupBy<any>) => {
 
-                    x.toKey(new Bag.Dif("hello", 1, 2)).should.equal("hello");
+                    x.toKey(new Bag.Dif("hello", 1, 2)).should.equal('"hello"');
                     x.reduce(new Bag.Dif("hello", 2, 3), new Bag.Dif("world", 4, 8)).should.deep
                         .equal(new Bag.Dif("hello", 6, 11));
 
