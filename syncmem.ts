@@ -4,19 +4,19 @@ import * as D from "./dag";
 import * as A from "./array";
 import * as F from "./flatten";
 
-type LazyArray<T> = () => T[];
+type GetArray<T> = () => T[];
 
 class SyncMem {
 
-    private _map: { [id: string]: LazyArray<any> } = {};
+    private _map: { [id: string]: GetArray<any> } = {};
 
     private _dag: D.Dag = new D.Dag();
 
-    set<T>(input: B.Bag<T>, lazyArray: LazyArray<T>): void {
-        this._map[input.id] = lazyArray;
+    set<T>(input: B.Bag<T>, getArray: GetArray<T>): void {
+        this._map[input.id] = getArray;
     }
 
-    get<T>(b: B.Bag<T>): LazyArray<T> {
+    get<T>(b: B.Bag<T>): GetArray<T> {
         const id = b.id;
         let result = this._map[id];
         if (result !== undefined) {
@@ -43,7 +43,7 @@ class SyncMem {
         return newResult;
     }
 
-    private _get<T>(o: O.Bag<T>): LazyArray<T> {
+    private _get<T>(o: O.Bag<T>): GetArray<T> {
         const id = o.id;
         const links = o.array
             .map(link => link.implementation(<I>(value: O.LinkValue<T, I>) => {
@@ -66,7 +66,7 @@ class SyncMem {
         return newResult;
     }
 
-    private _fromNode<T>(n: O.Node<T>): LazyArray<T> {
+    private _fromNode<T>(n: O.Node<T>): GetArray<T> {
         const id = n.id;
         const map = this._map;
         const result = map[id];
@@ -74,30 +74,39 @@ class SyncMem {
             return result;
         }
         const get = <I>(b: O.Bag<I>) => this._get(b);
-        class Visitor implements O.NodeVisitor<T, LazyArray<T>> {
+        class Visitor implements O.NodeVisitor<T, GetArray<T>> {
 
-            input(): LazyArray<T> { return () => map[id](); }
+            input(): GetArray<T> { return () => map[id](); }
 
-            one(value: T): LazyArray<T> { return () => [value]; }
+            one(value: T): GetArray<T> { return () => [value]; }
 
-            groupBy<K>(
-                input: O.Bag<T>, toKey: B.KeyFunc<T, K>, reduce: B.ReduceFunc<T>
-            ): LazyArray<T> {
-                const map = new Map<K, T>();
+            groupBy(
+                input: O.Bag<T>, toKey: B.KeyFunc<T>, reduce: B.ReduceFunc<T>
+            ): GetArray<T> {
                 const inputLazyArray = get(input);
                 return () => {
+                    // NOTE: possible optimization: we can cache the result of the function.
+                    const map: { [id: string]: T; } = {};
                     inputLazyArray().forEach(value => {
                         const key = toKey(value);
-                        const current = map.get(key);
+                        const current = map[key];
+                        map[key] = current !== undefined ? reduce(current, value) : value;
                     });
-                    return null;
+                    return Object.keys(map).map(k => map[k]);
                 };
             }
 
             product<A, B>(
                 a: O.Bag<A>, b: O.Bag<B>, func: B.ProductFunc<A, B, T>
-            ): LazyArray<T> {
-                return null;
+            ): GetArray<T> {
+                const getA = get(a);
+                const getB = get(b);
+                return () => {
+                    // NOTE: possible optimization: we can cache the result of the function.
+                    const aArray = A.ref(getA());
+                    const bArray = A.ref(getB());
+                    return aArray.flatten(av => bArray.flatten(bv => func(av, bv)));
+                };
             }
         }
         const newResult = n.implementation(new Visitor());
