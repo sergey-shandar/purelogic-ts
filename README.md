@@ -11,6 +11,15 @@ PureLogic-TS is an
 
 PureLogic for TypeScript
 
+## Bag Types
+
+- Input
+- One
+- Flatten
+- DisjointUnion
+- GroupBy. The key is always string. [ES6 Map](https://tc39.github.io/ecma262/#sec-map-objects) shouldn't be used because some back-ends may serialize objects.
+- Product
+
 ## Bag Methods
 
 See [lodash](https://lodash.com/docs) and [underscore](http://underscorejs.org/).
