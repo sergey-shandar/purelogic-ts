@@ -17,7 +17,7 @@ PureLogic for TypeScript
 - One
 - Flatten
 - DisjointUnion
-- GroupBy. The key is always string. [ES6 Map](https://tc39.github.io/ecma262/#sec-map-objects) shouldn't be used because some back-ends may serialize objects.
+- GroupBy. The key is always a string. [ES6 Map](https://tc39.github.io/ecma262/#sec-map-objects) shouldn't be used because some back-ends may serialize objects.
 - Product
 
 ## Bag Methods
