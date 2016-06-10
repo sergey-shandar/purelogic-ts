@@ -5,7 +5,7 @@ import * as array from "./array";
 export interface NodeVisitor<T, R> {
     input(): R;
     one(value: T): R;
-    groupBy<K>(inputs: Bag<T>, toKey: KeyFunc<T, K>, reduce: ReduceFunc<T>): R;
+    groupBy(inputs: Bag<T>, toKey: KeyFunc<T>, reduce: ReduceFunc<T>): R;
     product<A, B>(a: Bag<A>, b: Bag<B>, func: ProductFunc<A, B, T>): R;
 }
 
@@ -61,7 +61,7 @@ export class Bag<T> {
      * https://github.com/Microsoft/TypeScript/pull/6885
      */
     constructor(public id: string, public array: Link<T>[]) { }
-    groupBy<K>(id: string, toKey: KeyFunc<T, K>, reduce: ReduceFunc<T>): Bag<T> {
+    groupBy(id: string, toKey: KeyFunc<T>, reduce: ReduceFunc<T>): Bag<T> {
         return new Node(
                 id,
                 <R>(visitor: NodeVisitor<T, R>) => visitor.groupBy(this, toKey, reduce))

@@ -6,7 +6,7 @@ import * as flatten from "../flatten";
 interface OptionalBagVisitor<T> {
     input?: (id: number) => void;
     one?: (value: T) => void;
-    groupBy?: <K>(inputs: Bag<T>, toKey: KeyFunc<T, K>, reduce: ReduceFunc<T>) => void;
+    groupBy?: (inputs: Bag<T>, toKey: KeyFunc<T>, reduce: ReduceFunc<T>) => void;
     product?: <A, B>(a: Bag<A>, b: Bag<B>, func: ProductFunc<A, B, T>) => void;
 }
 
@@ -91,7 +91,7 @@ describe("optimized.ts", function() {
         })
         it("groupBy()", () => {
             const x = one("0", { a: 4, b: "hello" });
-            const toKey = (v: {a:number, b: string}) => v.a;
+            const toKey = (v: {a:number, b: string}) => v.a.toString();
             const reduce = <T>(a: T, b: T) => a;
             const bag = x.groupBy("1", toKey, reduce);
             bag.array[0].implementation(<I>(link: LinkValue<{a:number, b: string}, I>) => {

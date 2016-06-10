@@ -23,7 +23,7 @@ export class Dag {
             input(): Optimized.Bag<T> {
                 return Optimized.input<T>(id);
             }
-            groupBy<K>(value: Bag.GroupBy<T, K>): Optimized.Bag<T> {
+            groupBy(value: Bag.GroupBy<T>): Optimized.Bag<T> {
                 return getOpimized(value.input).groupBy(id, value.toKey, value.reduce);
             }
             product<A, B>(value: Bag.Product<T, A, B>): Optimized.Bag<T> {
