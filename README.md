@@ -11,11 +11,6 @@ PureLogic-TS is an
 
 PureLogic for TypeScript
 
-## Data And Operation Requirements
-
-- Serializable. All data should be serializable.
-- Immutable. All data operations (functions) should not change input data.
-
 ## Bag Types
 
 - Input
@@ -35,11 +30,16 @@ See [lodash](https://lodash.com/docs) and [underscore](http://underscorejs.org/)
 - Async Memory
 - Event-based in Memory
 
+## Data And Data Operation Requirements
+
+- Serializable. All data should be serializable.
+- Immutable. All data operations (functions) should not change input data.
+
 # For Developers
 
 ## Required
 
-- [Node.js](https://nodejs.org/en/) 6.2.0 or higher
+- [Node.js](https://nodejs.org/en/) 6.2.1 or higher
 
 ## Optional
 
@@ -53,7 +53,7 @@ See [lodash](https://lodash.com/docs) and [underscore](http://underscorejs.org/)
 
 ## Cloud9
 
-Run `nvm install 6.2 && nvm use 6.2` in [Cloud9](https://c9.io) workspace.
+Run `nvm install 6.2.1 && nvm use 6.2.1` in [Cloud9](https://c9.io) workspace.
 
 ## Conventions And Rules
 
