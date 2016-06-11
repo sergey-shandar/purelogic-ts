@@ -17,30 +17,7 @@ export class SyncMem {
     }
 
     get<T>(b: bag.Bag<T>): GetArray<T> {
-        const id = b.id;
-        let result = this._map[id];
-        if (result !== undefined) {
-            return result;
-        }
-        const links = this._dag.get(b).array
-            .map(link => link.implementation(<I>(value: optimized.LinkValue<T, I>) => {
-                // NOTE: possible optimization:
-                // if (f === flatten.identity) { return nodeFunc; }
-                const f = value.func;
-                const nodeFunc = this._fromNode(value.node);
-                return () => array.ref(nodeFunc()).flatten(f);
-            }));
-        result = this._map[id];
-        if (result !== undefined) {
-            return result;
-        }
-
-        // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
-        const refLinks = array.ref(links);
-        const newResult = () => refLinks.flatten(f => f());
-
-        this._map[b.id] = newResult;
-        return newResult;
+        return this._get(this._dag.get(b));
     }
 
     private _get<T>(o: optimized.Bag<T>): GetArray<T> {
