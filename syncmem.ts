@@ -3,6 +3,7 @@ import * as bag from "./bag";
 import * as dag from "./dag";
 import * as array from "./array";
 import * as flatten from "./flatten";
+import * as lazy from "./lazy";
 
 export type GetArray<T> = () => T[];
 
@@ -61,8 +62,7 @@ export class SyncMem {
                 input: optimized.Bag<T>, toKey: bag.KeyFunc<T>, reduce: bag.ReduceFunc<T>
             ): GetArray<T> {
                 const inputLazyArray = get(input);
-                return () => {
-                    // NOTE: possible optimization: we can cache the result of the function.
+                return lazy.lazy(() => {
                     const map: { [id: string]: T; } = {};
                     inputLazyArray().forEach(value => {
                         const key = toKey(value);
@@ -70,7 +70,7 @@ export class SyncMem {
                         map[key] = current !== undefined ? reduce(current, value) : value;
                     });
                     return Object.keys(map).map(k => map[k]);
-                };
+                });
             }
 
             product<A, B>(
@@ -78,12 +78,11 @@ export class SyncMem {
             ): GetArray<T> {
                 const getA = get(a);
                 const getB = get(b);
-                return () => {
-                    // NOTE: possible optimization: we can cache the result of the function.
+                return lazy.lazy(() => {
                     const aArray = array.ref(getA());
                     const bArray = array.ref(getB());
                     return aArray.flatten(av => bArray.flatten(bv => func(av, bv)));
-                };
+                });
             }
         }
         const newResult = n.implementation(new Visitor());
