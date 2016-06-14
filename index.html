@@ -1,38 +1,40 @@
 <!DOCTYPE html>
 <html>
-
   <head>
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="description" content="Purelogic-ts : PureLogic for TypeScript">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
 
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
 
-    <title>Purelogic-ts</title>
+    <title>Purelogic-ts by sergey-shandar</title>
   </head>
 
   <body>
+    <header>
+      <div class="inner">
+        <h1>Purelogic-ts</h1>
+        <h2>PureLogic for TypeScript</h2>
+        <a href="https://github.com/sergey-shandar/purelogic-ts" class="button"><small>View project on</small> GitHub</a>
+      </div>
+    </header>
 
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/sergey-shandar/purelogic-ts">View on GitHub</a>
-
-          <h1 id="project_title">Purelogic-ts</h1>
-          <h2 id="project_tagline">PureLogic for TypeScript</h2>
-
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/sergey-shandar/purelogic-ts/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/sergey-shandar/purelogic-ts/tarball/master">Download this project as a tar.gz file</a>
-            </section>
-        </header>
-    </div>
-
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
-        <h1>
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <h1>
 <a id="purelogic-ts" class="anchor" href="#purelogic-ts" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>purelogic-ts</h1>
+
+<p>PureLogic-TS is an 
+<a href="https://en.wikipedia.org/wiki/Domain-specific_language#Usage_patterns">embedded DSL</a> for describing
+<a href="https://en.wikipedia.org/wiki/MapReduce">map-reduce</a> logic on 
+<a href="http://www.typescriptlang.org/">TypeScript</a>.</p>
 
 <p><a href="https://travis-ci.org/sergey-shandar/purelogic-ts"><img src="https://travis-ci.org/sergey-shandar/purelogic-ts.svg?branch=master" alt="Build Status"></a></p>
 
@@ -43,36 +45,19 @@
 <h2>
 <a id="bag-types" class="anchor" href="#bag-types" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Bag Types</h2>
 
+<ul>
+<li>Input</li>
+<li>One</li>
+<li>Flatten</li>
+<li>DisjointUnion</li>
+<li>GroupBy. The key is always a string. <a href="https://tc39.github.io/ecma262/#sec-map-objects">ES6 Map</a> shouldn't be used because some back-ends may serialize objects.</li>
+<li>Product</li>
+</ul>
+
 <h2>
 <a id="bag-methods" class="anchor" href="#bag-methods" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Bag Methods</h2>
 
 <p>See <a href="https://lodash.com/docs">lodash</a> and <a href="http://underscorejs.org/">underscore</a>.</p>
-
-<h2>
-<a id="tools-for-development" class="anchor" href="#tools-for-development" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Tools For Development</h2>
-
-<h3>
-<a id="required" class="anchor" href="#required" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Required</h3>
-
-<ul>
-<li>
-<a href="https://nodejs.org/en/">Node.js</a> 6.2.0 or higher</li>
-</ul>
-
-<h3>
-<a id="optional" class="anchor" href="#optional" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Optional</h3>
-
-<ul>
-<li>Visual Studio Code</li>
-</ul>
-
-<h3>
-<a id="for-developers" class="anchor" href="#for-developers" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>For Developers</h3>
-
-<ul>
-<li>install dependencies <code>npm install</code>.</li>
-<li>run unit test and coverage <code>npm test</code>.</li>
-</ul>
 
 <h2>
 <a id="back-ends" class="anchor" href="#back-ends" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Back-ends</h2>
@@ -84,21 +69,89 @@
 </ul>
 
 <h2>
-<a id="target" class="anchor" href="#target" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Target</h2>
+<a id="data-and-data-operation-requirements" class="anchor" href="#data-and-data-operation-requirements" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Data And Data Operation Requirements</h2>
 
-<p>The project targets "ES6" because TypeScript 1.8 supports <code>async</code> only for "ES6" and above.</p>
-      </section>
+<ul>
+<li>Serializable. All data should be serializable.</li>
+<li>Immutable. All data operations (functions) should not change input data.</li>
+</ul>
+
+<h1>
+<a id="for-developers" class="anchor" href="#for-developers" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>For Developers</h1>
+
+<h2>
+<a id="required" class="anchor" href="#required" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Required</h2>
+
+<ul>
+<li>
+<a href="https://nodejs.org/en/">Node.js</a> 6.2.1 or higher</li>
+</ul>
+
+<h2>
+<a id="optional" class="anchor" href="#optional" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Optional</h2>
+
+<ul>
+<li><a href="https://www.visualstudio.com/products/code-vs">Visual Studio Code</a></li>
+<li>TypeScript <code>npm install typescript -g</code>
+</li>
+</ul>
+
+<h2>
+<a id="getting-started" class="anchor" href="#getting-started" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Getting Started</h2>
+
+<ul>
+<li>install dependencies <code>npm install</code>.</li>
+<li>run unit test and coverage <code>npm test</code>.</li>
+</ul>
+
+<h2>
+<a id="cloud9" class="anchor" href="#cloud9" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Cloud9</h2>
+
+<p>Run <code>nvm install 6.2.1 &amp;&amp; nvm use 6.2.1</code> in <a href="https://c9.io">Cloud9</a> workspace.</p>
+
+<h2>
+<a id="conventions-and-rules" class="anchor" href="#conventions-and-rules" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Conventions And Rules</h2>
+
+<ul>
+<li>Don't use class inheritance. Use interfaces and sealed classes.</li>
+<li>The project targets "ES6" because TypeScript 1.8 supports <code>async</code> only for "ES6" and above. 
+According to <a href="http://kangax.github.io/compat-table/es6/">ES6 Compatibility Table</a>, we can use ES6
+for
+
+<ul>
+<li>Edge 13+ (Windows 10, Windows 10 Mobile, Xbox One),</li>
+<li>FireFox 45+,</li>
+<li>Chrome 51+ (including Android 4.2+),</li>
+<li>Safari 9 (OS X 10.11 El Capitan),</li>
+<li>iOS 9 (iPhone 4S+).</li>
+<li>Node 6+,</li>
+</ul>
+</li>
+<li>Print margin column (line width) is 100 symbols. </li>
+<li>Keep object properties immutable, see also <a href="https://github.com/Microsoft/TypeScript/pull/6532">https://github.com/Microsoft/TypeScript/pull/6532</a>
+</li>
+<li>Keep object properties non-nullable, see also <a href="https://github.com/Microsoft/TypeScript/pull/7140">https://github.com/Microsoft/TypeScript/pull/7140</a>
+</li>
+</ul>
+        </section>
+
+        <aside id="sidebar">
+          <a href="https://github.com/sergey-shandar/purelogic-ts/zipball/master" class="button">
+            <small>Download</small>
+            .zip file
+          </a>
+          <a href="https://github.com/sergey-shandar/purelogic-ts/tarball/master" class="button">
+            <small>Download</small>
+            .tar.gz file
+          </a>
+
+          <p class="repo-owner"><a href="https://github.com/sergey-shandar/purelogic-ts"></a> is maintained by <a href="https://github.com/sergey-shandar">sergey-shandar</a>.</p>
+
+          <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
+        </aside>
+      </div>
     </div>
 
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">Purelogic-ts maintained by <a href="https://github.com/sergey-shandar">sergey-shandar</a></p>
-        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
-      </footer>
-    </div>
-
-    
-
+  
   </body>
 </html>
