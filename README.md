@@ -9,8 +9,6 @@ PureLogic-TS is an
 
 [Web Site](http://sergey-shandar.github.io/purelogic-ts)
 
-PureLogic for TypeScript
-
 ## Bag Types
 
 - Input
