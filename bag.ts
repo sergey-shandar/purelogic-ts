@@ -1,6 +1,6 @@
 import * as flatten from "./flatten";
 
-export type KeyFunc<I, K> = (value: I) => K;
+export type KeyFunc<T> = (value: T) => string;
 
 export type ReduceFunc<T> = (a: T, b: T) => T;
 
@@ -18,10 +18,10 @@ export class DisjointUnion<T> {
         public b: Bag<T>) {}
 }
 
-export class GroupBy<T, K> {
+export class GroupBy<T> {
     constructor(
         public input: Bag<T>,
-        public toKey: KeyFunc<T, K>,
+        public toKey: KeyFunc<T>,
         public reduce: ReduceFunc<T>) {}
 }
 
@@ -43,7 +43,7 @@ export interface Visitor<T, R> {
     /**
      * LINQ: GroupBy
      */
-    groupBy<K>(value: GroupBy<T, K>): R;
+    groupBy(value: GroupBy<T>): R;
     product<A, B>(value: Product<T, A, B>): R;
 }
 
@@ -65,10 +65,10 @@ let bagCounter: number = 0;
 
 export class Bag<T> {
 
-    id: number;
+    id: string;
 
     constructor(public implementation: Implementation<T>) {
-        this.id = bagCounter;
+        this.id = bagCounter.toString();
         ++bagCounter;
     }
 
@@ -85,7 +85,7 @@ export class Bag<T> {
     /**
      * LINQ: GroupBy
      */
-    groupBy<K>(toKey: KeyFunc<T, K>, reduce: ReduceFunc<T>): Bag<T> {
+    groupBy<K>(toKey: KeyFunc<T>, reduce: ReduceFunc<T>): Bag<T> {
         return new Bag(<R>(visitor: Visitor<T, R>) =>
             visitor.groupBy(new GroupBy(this, toKey, reduce)));
     }
@@ -112,14 +112,15 @@ export class Bag<T> {
      * LINQ: Accumulate
      */
     reduce(func: ReduceFunc<T>): Bag<T> {
-        return this.groupBy(() => null, func);
+        return this.groupBy(() => "", func);
     }
     dif(b: Bag<T>): Bag<Dif<T>> {
         const toDif = (bag: Bag<T>, a: number, b: number) =>
             bag.map(v => new Dif(v, a, b));
         const aDif = toDif(this, 1, 0);
         const bDif = toDif(b, 0, 1);
-        return aDif.disjointUnion(bDif)
-            .groupBy(v => v.value, (x, y) => new Dif(x.value, x.a + y.a, x.b + y.b));
+        return aDif.disjointUnion(bDif).groupBy(
+            v => JSON.stringify(v.value),
+            (x, y) => new Dif(x.value, x.a + y.a, x.b + y.b));
     }
 }
