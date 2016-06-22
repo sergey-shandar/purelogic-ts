@@ -1,5 +1,6 @@
 instrumentation:
     include-all-sources: true
+    excludes: ["bundle.js"]
 check:
     global:
         statements: 100
