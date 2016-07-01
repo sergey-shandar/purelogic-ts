@@ -67,7 +67,7 @@ According to [ES6 Compatibility Table](http://kangax.github.io/compat-table/es6/
 - Edge 13+ (Windows 10, Windows 10 Mobile, Xbox One),
 - FireFox 45+,
 - Chrome 51+ (including Android 4.2+),
-- Node 6+,
+- Node 6+.
 
 Partial ES6 support
 - Safari 9 (OS X 10.11 El Capitan),
