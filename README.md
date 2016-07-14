@@ -37,7 +37,7 @@ See [lodash](https://lodash.com/docs) and [underscore](http://underscorejs.org/)
 
 ## Required
 
-- [Node.js](https://nodejs.org/en/) 6.2.1 or higher
+- [Node.js](https://nodejs.org/en/) 6.2.2 or higher
 
 ## Optional
 
@@ -51,7 +51,7 @@ See [lodash](https://lodash.com/docs) and [underscore](http://underscorejs.org/)
 
 ## Cloud9
 
-Run `nvm install 6.2.1 && nvm use 6.2.1` in [Cloud9](https://c9.io) workspace.
+Run `nvm install 6.2.2 && nvm use 6.2.2` in [Cloud9](https://c9.io) workspace.
 
 ## Conventions And Rules
 
@@ -62,8 +62,7 @@ Run `nvm install 6.2.1 && nvm use 6.2.1` in [Cloud9](https://c9.io) workspace.
 
 ### ES6
 
-The project targets "ES6" because TypeScript 1.8 supports `async` only for "ES6" and above. 
-According to [ES6 Compatibility Table](http://kangax.github.io/compat-table/es6/), we can use ES6 for
+The project targets "ES6". According to [ES6 Compatibility Table](http://kangax.github.io/compat-table/es6/), we can use ES6 for
 - Edge 13+ (Windows 10, Windows 10 Mobile, Xbox One),
 - FireFox 45+,
 - Chrome 51+ (including Android 4.2+),
