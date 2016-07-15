@@ -8,28 +8,28 @@ export type ProductFunc<A, B, O> = (a: A, b: B) => O[];
 
 export class Flatten<T, I> {
     constructor(
-        public input: Bag<I>,
-        public func: flatten.Func<I, T>) {}
+        public readonly input: Bag<I>,
+        public readonly func: flatten.Func<I, T>) {}
 }
 
 export class DisjointUnion<T> {
     constructor(
-        public a: Bag<T>,
-        public b: Bag<T>) {}
+        public readonly a: Bag<T>,
+        public readonly b: Bag<T>) {}
 }
 
 export class GroupBy<T> {
     constructor(
-        public input: Bag<T>,
-        public toKey: KeyFunc<T>,
-        public reduce: ReduceFunc<T>) {}
+        public readonly input: Bag<T>,
+        public readonly toKey: KeyFunc<T>,
+        public readonly reduce: ReduceFunc<T>) {}
 }
 
 export class Product<T, A, B> {
     constructor(
-        public a: Bag<A>,
-        public b: Bag<B>,
-        public func: ProductFunc<A, B, T>) {}
+        public readonly a: Bag<A>,
+        public readonly b: Bag<B>,
+        public readonly func: ProductFunc<A, B, T>) {}
 }
 
 export interface Visitor<T, R> {
@@ -50,7 +50,7 @@ export interface Visitor<T, R> {
 export type Implementation<T> = <R>(visitor: Visitor<T, R>) => R;
 
 export class Dif<T> {
-    constructor(public value: T, public a: number, public b: number) { }
+    constructor(public readonly value: T, public readonly a: number, public readonly b: number) {}
 }
 
 export function one<T>(value: T): Bag<T> {
@@ -65,9 +65,9 @@ let bagCounter: number = 0;
 
 export class Bag<T> {
 
-    id: string;
+    readonly id: string;
 
-    constructor(public implementation: Implementation<T>) {
+    constructor(public readonly implementation: Implementation<T>) {
         this.id = bagCounter.toString();
         ++bagCounter;
     }
@@ -85,7 +85,7 @@ export class Bag<T> {
     /**
      * LINQ: GroupBy
      */
-    groupBy<K>(toKey: KeyFunc<T>, reduce: ReduceFunc<T>): Bag<T> {
+    groupBy(toKey: KeyFunc<T>, reduce: ReduceFunc<T>): Bag<T> {
         return new Bag(<R>(visitor: Visitor<T, R>) =>
             visitor.groupBy(new GroupBy(this, toKey, reduce)));
     }

@@ -1,5 +1,5 @@
 import "mocha";
-import { ref, Ref } from "../array";
+import { ref } from "../array";
 import * as chai from "chai";
 
 chai.should();

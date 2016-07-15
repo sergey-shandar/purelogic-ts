@@ -46,7 +46,7 @@ describe("dag.ts", function() {
             xDisjointUnion2.array[0].nodeId().should.equal(one.id);
             xDisjointUnion2.array[1].nodeId().should.equal(input.id);
 
-            const groupBy = one.reduce((a, b) => a);
+            const groupBy = one.reduce((a, _) => a);
             const xGroupBy = dag.get(groupBy);
             xGroupBy.id.should.equal(groupBy.id);
             xGroupBy.array.length.should.equal(1);

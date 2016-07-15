@@ -50,7 +50,7 @@ describe("bag.ts", function() {
         it("groupBy()", () => {
             const a = Bag.one("Hello World!");
             const key = (x: string) => x;
-            const reduce = (a: string, b: string) => a;
+            const reduce = (a: string, _: string) => a;
             check(a.groupBy(key, reduce), {
                 groupBy: (x: Bag.GroupBy<string>) =>  {
                     x.should.deep.equal(new Bag.GroupBy(a, key, reduce));
@@ -62,7 +62,7 @@ describe("bag.ts", function() {
             const b = Bag.one("Hello world!");
             const f = (x: number, y: string) => [{ a: x, b: y }];
             check(a.product(b, f), {
-                product: <A, B>(x: Bag.Product<{ a: number, b: string }, number, string>) => {
+                product: (x: Bag.Product<{ a: number, b: string }, number, string>) => {
                     x.should.deep.equal(new Bag.Product(a, b, f));
                 }
             });
