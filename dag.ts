@@ -3,11 +3,11 @@ import * as Bag from "./bag";
 
 export class Dag {
 
-    private readonly map: { [id: string]: any } = {};
+    private readonly _map: { [id: string]: any } = {};
 
     get<T>(bag: Bag.Bag<T>): Optimized.Bag<T> {
         const id = bag.id;
-        const cached = this.map[id];
+        const cached = this._map[id];
         if (cached !== undefined) {
             return cached;
         }
@@ -33,7 +33,7 @@ export class Dag {
             }
         }
         const result = bag.implementation(new Visitor());
-        this.map[id] = result;
+        this._map[id] = result;
         return result;
     }
 }

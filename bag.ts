@@ -78,10 +78,12 @@ export class Bag<T> {
     flatten<O>(func: flatten.Func<T, O>): Bag<O> {
         return new Bag(<R>(visitor: Visitor<O, R>) => visitor.flatten(new Flatten(this, func)));
     }
+
     disjointUnion(b: Bag<T>): Bag<T> {
         return new Bag(<R>(visitor: Visitor<T, R>) =>
             visitor.disjointUnion(new DisjointUnion(this, b)));
     }
+
     /**
      * LINQ: GroupBy
      */
@@ -89,6 +91,7 @@ export class Bag<T> {
         return new Bag(<R>(visitor: Visitor<T, R>) =>
             visitor.groupBy(new GroupBy(this, toKey, reduce)));
     }
+
     product<B, O>(b: Bag<B>, func: ProductFunc<T, B, O>): Bag<O> {
         return new Bag(<R>(visitor: Visitor<O, R>) => visitor.product(new Product(this, b, func)));
     }
@@ -99,21 +102,25 @@ export class Bag<T> {
     map<O>(func: (value: T) => O): Bag<O> {
         return this.flatten(value => [func(value)]);
     }
+
     /**
      * LINQ: Where
      */
     filter(func: (value: T) => boolean): Bag<T> {
         return this.flatten(value => func(value) ? [value] : []);
     }
+
     compact(): Bag<T> {
         return this.filter(Boolean);
     }
+
     /**
      * LINQ: Accumulate
      */
     reduce(func: ReduceFunc<T>): Bag<T> {
         return this.groupBy(() => "", func);
     }
+
     dif(b: Bag<T>): Bag<Dif<T>> {
         const toDif = (bag: Bag<T>, a: number, b: number) =>
             bag.map(v => new Dif(v, a, b));

@@ -1,5 +1,8 @@
 import "mocha";
+import * as chai from "chai";
 import { lazy } from "../lazy";
+
+chai.should();
 
 describe("lazy.ts", function() {
     it("lazy()", () => {

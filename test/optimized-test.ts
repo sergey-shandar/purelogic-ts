@@ -1,7 +1,10 @@
 import "mocha";
+import * as chai from "chai";
 import { Node, NodeVisitor, Bag, input, LinkValue, one } from "../optimized";
 import { ReduceFunc, KeyFunc, ProductFunc } from "../bag";
 import * as flatten from "../flatten";
+
+chai.should();
 
 interface OptionalBagVisitor<T> {
     input?: (id: number) => void;
