@@ -1,6 +1,9 @@
 import "mocha";
+import * as chai from "chai";
 import { Dag } from "../dag";
 import * as B from "../bag";
+
+chai.should();
 
 describe("dag.ts", function() {
     describe("class Dag", function() {
