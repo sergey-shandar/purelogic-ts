@@ -4,12 +4,11 @@
   "description": "PureLogic for TypeScript",
   "main": "index.js",
   "scripts": {
-    "prepublish": "typings install && tsc",
+    "prepublish": "tsc",
     "test": "tsc && tslint *.ts && npm run istanbul-cover-check && npm run browserify-ui",
     "istanbul-cover-check": "istanbul cover node_modules/mocha/bin/_mocha && istanbul check-coverage",
     "browserify-ui": "browserify -r ./ui.js:ui -o bundle.js",
     "mocha": "mocha",
-    "typings": "typings",
     "istanbul": "istanbul",
     "tslint": "tslint",
     "tsc": "tsc",
@@ -31,11 +30,12 @@
   "homepage": "https://github.com/sergey-shandar/purelogic-ts#readme",
   "devDependencies": {
     "browserify": "^13.0.1",
+    "@types/chai": "^3.4.28",
+    "@types/mocha": "^2.2.27",
     "chai": "^3.5.0",
-    "istanbul": "^0.4.3",
+    "istanbul": "^0.4.4",
     "mocha": "^2.5.3",
-    "tslint": "^3.11.0",
-    "typescript": "^1.8.10",
-    "typings": "^1.0.4"
+    "tslint": "^3.13.0",
+    "typescript": "^2.0.0"
   }
 }

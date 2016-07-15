@@ -23,7 +23,7 @@ describe("bag.ts", function() {
     it("input()", () => {
         const bag = Bag.input<string>()
         const bag2 = Bag.one(8);
-        Number.parseInt(bag.id).should.equal(Number.parseInt(bag2.id) - 1);
+        parseInt(bag.id).should.equal(parseInt(bag2.id) - 1);
         check(bag, {
             input: () => null
         })
