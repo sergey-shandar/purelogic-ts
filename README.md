@@ -1,8 +1,8 @@
 # purelogic-ts
 
-PureLogic-TS is an 
+PureLogic-TS is an
 [embedded DSL](https://en.wikipedia.org/wiki/Domain-specific_language#Usage_patterns) for describing
-[map-reduce](https://en.wikipedia.org/wiki/MapReduce) logic on 
+[map-reduce](https://en.wikipedia.org/wiki/MapReduce) logic on
 [TypeScript](http://www.typescriptlang.org/).
 
 [![Build Status](https://travis-ci.org/sergey-shandar/purelogic-ts.svg?branch=master)](https://travis-ci.org/sergey-shandar/purelogic-ts)
@@ -37,7 +37,7 @@ See [lodash](https://lodash.com/docs) and [underscore](http://underscorejs.org/)
 
 ## Required
 
-- [Node.js](https://nodejs.org/en/) 6.2.2 or higher
+- [Node.js](https://nodejs.org/en/) 6.3.0 or higher
 
 ## Optional
 
@@ -51,18 +51,19 @@ See [lodash](https://lodash.com/docs) and [underscore](http://underscorejs.org/)
 
 ## Cloud9
 
-Run `nvm install 6.2.2 && nvm use 6.2.2` in [Cloud9](https://c9.io) workspace.
+Run `nvm install 6.3.0 && nvm use 6.3.0` in [Cloud9](https://c9.io) workspace.
 
 ## Conventions And Rules
 
 - Don't use class inheritance. Use interfaces and sealed classes.
-- Print margin column (line width) is 100 symbols. 
+- Print margin column (line width) is 100 symbols.
 - Keep object properties immutable, see also https://github.com/Microsoft/TypeScript/pull/6532
 - Keep object properties non-nullable, see also https://github.com/Microsoft/TypeScript/pull/7140
 
 ### ES6
 
-The project targets "ES6". According to [ES6 Compatibility Table](http://kangax.github.io/compat-table/es6/), we can use ES6 for
+The project targets "ES6" because TypeScript 2.0 supports `async` only for "ES6" and above.
+According to [ES6 Compatibility Table](http://kangax.github.io/compat-table/es6/), we can use ES6 for
 - Edge 13+ (Windows 10, Windows 10 Mobile, Xbox One),
 - FireFox 45+,
 - Chrome 51+ (including Android 4.2+),

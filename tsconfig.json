@@ -7,7 +7,9 @@
         "strictNullChecks": true,
         "noFallthroughCasesInSwitch": true,
         "noImplicitReturns": true,
-        "pretty": true
+        "pretty": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true
     },
     "exclude": [
         "node_modules",

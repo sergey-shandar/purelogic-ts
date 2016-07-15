@@ -2,8 +2,10 @@ import * as Optimized from "./optimized";
 import * as Bag from "./bag";
 
 export class Dag {
-    private map: { [id: string]: any } = {};
-    public get<T>(bag: Bag.Bag<T>): Optimized.Bag<T> {
+
+    private readonly map: { [id: string]: any } = {};
+
+    get<T>(bag: Bag.Bag<T>): Optimized.Bag<T> {
         const id = bag.id;
         const cached = this.map[id];
         if (cached !== undefined) {

@@ -12,7 +12,10 @@ export interface NodeVisitor<T, R> {
 export type NodeImplementation<T> = <R>(visitor: NodeVisitor<T, R>) => R;
 
 export class Node<T> {
-    constructor(public id: string, public implementation: NodeImplementation<T>) {}
+    constructor(
+        public readonly id: string,
+        public readonly implementation: NodeImplementation<T>) {
+    }
     link<O>(func: flatten.Func<T, O>): Link<O> {
         const value = new LinkValue(this, func);
         return new Link(<R>(visitor: LinkVisitor<O, R>) => visitor(value));
@@ -23,7 +26,7 @@ export class Node<T> {
 }
 
 export class LinkValue<T, I> {
-    constructor(public node: Node<I>, public func: flatten.Func<I, T>) {}
+    constructor(public readonly node: Node<I>, public readonly func: flatten.Func<I, T>) {}
 }
 
 export type LinkVisitor<T, R> = <I>(value: LinkValue<T, I>) => R;
@@ -31,7 +34,7 @@ export type LinkVisitor<T, R> = <I>(value: LinkValue<T, I>) => R;
 export type LinkImplementation<T> = <R>(visitor: LinkVisitor<T, R>) => R;
 
 export class Link<T> {
-    constructor(public implementation: LinkImplementation<T>) {}
+    constructor(public readonly implementation: LinkImplementation<T>) {}
     nodeId(): string {
         return this.implementation(<I>(x: LinkValue<T, I>) => x.node.id);
     }
@@ -60,7 +63,7 @@ export class Bag<T> {
      * The constructor should be private
      * https://github.com/Microsoft/TypeScript/pull/6885
      */
-    constructor(public id: string, public array: Link<T>[]) { }
+    constructor(public readonly id: string, public readonly array: Link<T>[]) {}
     groupBy(id: string, toKey: KeyFunc<T>, reduce: ReduceFunc<T>): Bag<T> {
         return new Node(
                 id,

@@ -2,16 +2,15 @@ import * as optimized from "./optimized";
 import * as bag from "./bag";
 import * as dag from "./dag";
 import * as array from "./array";
-import * as flatten from "./flatten";
 import * as lazy from "./lazy";
 
 export type GetArray<T> = () => T[];
 
 export class SyncMem {
 
-    private _map: { [id: string]: GetArray<any> } = {};
+    private readonly _map: { [id: string]: GetArray<any> } = {};
 
-    private _dag: dag.Dag = new dag.Dag();
+    private readonly _dag: dag.Dag = new dag.Dag();
 
     set<T>(input: bag.Bag<T>, getArray: GetArray<T>): void {
         this._map[input.id] = getArray;

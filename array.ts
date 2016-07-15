@@ -2,7 +2,7 @@ import * as flatten from "./flatten";
 
 export class Ref<T> {
 
-    constructor(public array: T[]) {}
+    constructor(public readonly array: T[]) {}
 
     flatten<O>(f: flatten.Func<T, O>): O[] {
         const result: O[] = [];

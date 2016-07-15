@@ -74,7 +74,7 @@ describe("optimized.ts", function() {
         })
         it("addFunc()", () => {
             const x = new Node("0", <R>(visitor: NodeVisitor<string, R>) => visitor.one("something"));
-            const link = x.link(flatten.identity).addFunc(<I>() => () => ["xxx"]);
+            const link = x.link(flatten.identity).addFunc(() => () => ["xxx"]);
             link.implementation(<I>(bb: LinkValue<string, I>) => {
                 bb.node.should.equal(x);
                 bb.func(<I> <any> "x").should.deep.equal(["x", "xxx"]);
@@ -92,7 +92,7 @@ describe("optimized.ts", function() {
         it("groupBy()", () => {
             const x = one("0", { a: 4, b: "hello" });
             const toKey = (v: {a:number, b: string}) => v.a.toString();
-            const reduce = <T>(a: T, b: T) => a;
+            const reduce = <T>(a: T, _: T) => a;
             const bag = x.groupBy("1", toKey, reduce);
             bag.array[0].implementation(<I>(link: LinkValue<{a:number, b: string}, I>) => {
                 check(link.node, {
