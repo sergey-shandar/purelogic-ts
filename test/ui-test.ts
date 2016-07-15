@@ -1,4 +1,4 @@
-import * as Ui from "../ui";
+import * as Ui from "../demo/ui";
 
 describe("ui.ts", function() {
     it("const total", () => {

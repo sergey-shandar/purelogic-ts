@@ -7,7 +7,7 @@
     "prepublish": "tsc",
     "test": "tsc && tslint *.ts && npm run istanbul-cover-check && npm run browserify-ui",
     "istanbul-cover-check": "istanbul cover node_modules/mocha/bin/_mocha && istanbul check-coverage",
-    "browserify-ui": "browserify -r ./ui.js:ui -o bundle.js",
+    "browserify-ui": "browserify -r ./demo/ui.js:ui -o ./demo/bundle.js",
     "mocha": "mocha",
     "istanbul": "istanbul",
     "tslint": "tslint",

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <script src="bundle.js"></script>
+        <script>
+var ui = require("ui");
+function myFunction() {
+    document.getElementById("demo").innerHTML = ui.total;
+}
+        </script>
+        <style>
+        </style>
+    </head>
+    <body>
+        <h1>My Web Page</h1>
+        <p id="demo">A Paragraph</p>
+        <button type="button" onclick="myFunction()">Try it</button>
+    </body>
+</html>

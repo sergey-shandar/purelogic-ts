@@ -1,5 +1,5 @@
-import * as bag from "./bag";
-import * as syncmem from "./syncmem";
+import * as bag from "../bag";
+import * as syncmem from "../syncmem";
 
 class Account {
     constructor(public name: string, public total: number) {
