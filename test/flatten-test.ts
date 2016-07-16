@@ -1,9 +1,9 @@
 import "mocha";
-import { identity } from "../flatten";
+import { flatten } from "../index";
 import * as chai from "chai";
 
 chai.should();
 
-describe("flatten.ts", function() {
-    it("identity()", () => identity(5).should.deep.equal([5]));
+describe("namespace flatten", function() {
+    it("identity()", () => flatten.identity(5).should.deep.equal([5]));
 });
