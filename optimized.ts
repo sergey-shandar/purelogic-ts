@@ -1,6 +1,5 @@
-import { flatten } from "./index";
+import { flatten, array } from "./index";
 import { KeyFunc, ReduceFunc, ProductFunc } from "./bag";
-import * as array from "./array";
 
 export interface NodeVisitor<T, R> {
     input(): R;
