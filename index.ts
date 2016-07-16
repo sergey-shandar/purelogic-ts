@@ -3,6 +3,18 @@ export namespace flatten {
     export function identity<T>(value: T): T[] { return [value]; }
 }
 
+export function lazy<T>(f: () => T): () => T {
+    let called = false;
+    let result: T;
+    return () => {
+        if (!called) {
+            result = f();
+            called = true;
+        }
+        return result;
+    };
+}
+
 export namespace array {
 
     export class Ref<T> {
@@ -21,20 +33,6 @@ export namespace array {
 
     export function ref<T>(array: T[]): Ref<T> {
         return new Ref(array);
-    }
-}
-
-export namespace lazy {
-    export function lazy<T>(f: () => T): () => T {
-        let called = false;
-        let result: T;
-        return () => {
-            if (!called) {
-                result = f();
-                called = true;
-            }
-            return result;
-        };
     }
 }
 

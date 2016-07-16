@@ -59,7 +59,7 @@ export class SyncMem {
                 input: optimized.Bag<T>, toKey: bag.KeyFunc<T>, reduce: bag.ReduceFunc<T>
             ): GetArray<T> {
                 const inputLazyArray = get(input);
-                return lazy.lazy(() => {
+                return lazy(() => {
                     const map: { [id: string]: T; } = {};
                     inputLazyArray().forEach(value => {
                         const key = toKey(value);
@@ -75,7 +75,7 @@ export class SyncMem {
             ): GetArray<T> {
                 const getA = get(a);
                 const getB = get(b);
-                return lazy.lazy(() => {
+                return lazy(() => {
                     const aArray = array.ref(getA());
                     const bArray = array.ref(getB());
                     return aArray.flatten(av => bArray.flatten(bv => func(av, bv)));
