@@ -1,4 +1,4 @@
-import * as flatten from "./flatten";
+import { flatten } from "./index";
 import { KeyFunc, ReduceFunc, ProductFunc } from "./bag";
 import * as array from "./array";
 

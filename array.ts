@@ -1,4 +1,4 @@
-import * as flatten from "./flatten";
+import { flatten } from "./index";
 
 export class Ref<T> {
 

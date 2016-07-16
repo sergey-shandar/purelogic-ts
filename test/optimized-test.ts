@@ -2,7 +2,7 @@ import "mocha";
 import * as chai from "chai";
 import { Node, NodeVisitor, Bag, input, LinkValue, one } from "../optimized";
 import { ReduceFunc, KeyFunc, ProductFunc } from "../bag";
-import * as flatten from "../flatten";
+import { flatten } from "../index";
 
 chai.should();
 
@@ -24,7 +24,7 @@ describe("optimized.ts", function() {
         b.array[0].implementation(<I>(link: LinkValue<number, I>) => {
             check(link.node, {
                 input: () => null
-            })
+            });
         });
 
     });
@@ -32,7 +32,7 @@ describe("optimized.ts", function() {
         one("0", "Hello!").array[0].implementation(<I>(link: LinkValue<string, I>) => {
             check(link.node, {
                 one: s => s.should.equal("Hello!")
-            })
+            });
         });
     });
     describe("class Node", function() {
@@ -43,8 +43,8 @@ describe("optimized.ts", function() {
             link.implementation(<I>(x: LinkValue<number, I>) => {
                 x.node.should.equal(a);
                 x.func.should.equal(f);
-            })
-        })
+            });
+        });
         it("bag()", () => {
             const a = new Node("42", <R>(visitor: NodeVisitor<string, R>) => visitor.one("Hello world!"));
             const bag = a.bag();
@@ -53,13 +53,13 @@ describe("optimized.ts", function() {
             bag.array[0].implementation(<I>(x: LinkValue<string, I>) => {
                 x.node.should.equal(a);
                 x.func.should.equal(flatten.identity);
-            })
-        })
-    })
+            });
+        });
+    });
     describe("class Link", function() {
         it("nodeId()", () => {
             one("42", "hello world").array[0].nodeId().should.equal("42");
-        })
+        });
         it("flatten()", () => {
             const a = new Node("0", <R>(visitor: NodeVisitor<number, R>) => visitor.one(10));
             const f = (x: number) => [x, x * x];
@@ -74,7 +74,7 @@ describe("optimized.ts", function() {
                 x.node.should.equal(a);
                 x.func(<I> <any> 10).should.deep.equal([10, 11, 100, 101]);
             });
-        })
+        });
         it("addFunc()", () => {
             const x = new Node("0", <R>(visitor: NodeVisitor<string, R>) => visitor.one("something"));
             const link = x.link(flatten.identity).addFunc(() => () => ["xxx"]);
@@ -82,8 +82,8 @@ describe("optimized.ts", function() {
                 bb.node.should.equal(x);
                 bb.func(<I> <any> "x").should.deep.equal(["x", "xxx"]);
             });
-        })
-    })
+        });
+    });
     describe("class Bag", function() {
         it("constructor()", () => {
             const node = new Node("0", <R>(visitor: NodeVisitor<number, R>) => visitor.one(10));
@@ -91,7 +91,7 @@ describe("optimized.ts", function() {
             const bag = new Bag("43", x);
             bag.id.should.equal("43");
             bag.array.should.equal(x);
-        })
+        });
         it("groupBy()", () => {
             const x = one("0", { a: 4, b: "hello" });
             const toKey = (v: {a:number, b: string}) => v.a.toString();
@@ -106,7 +106,7 @@ describe("optimized.ts", function() {
                     }
                 });
             });
-        })
+        });
         it("product()", () => {
             const a = one("0", 3);
             const b = one("1", "world");
@@ -121,7 +121,7 @@ describe("optimized.ts", function() {
                     }
                 });
             });
-        })
+        });
         it("flatten()", () => {
             const a = one("123", 9);
             const f = (x: number) => [x * 2];
@@ -130,7 +130,7 @@ describe("optimized.ts", function() {
                 b.node.id.should.equal("123");
                 b.func.should.equal(f);
             });
-        })
+        });
         it("disjointUnion()", () => {
             const a = one("101", 1);
             const b = one("1", 2);
@@ -142,6 +142,6 @@ describe("optimized.ts", function() {
                 x.node.id.should.equal("101");
                 x.func(10).should.deep.equal([10, 10]);
             });
-        })
-    })
-})
+        });
+    });
+});
