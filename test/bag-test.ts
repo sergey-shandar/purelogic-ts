@@ -18,7 +18,7 @@ function check<T>(bag: bag.Bag<T>, visitor: Visitor<T>) {
     bag.implementation(<bag.Visitor<T, void>> visitor);
 }
 
-describe("bag.ts", function() {
+describe("namespace bag", function() {
     it("one()", () => check(bag.one(5), { one: x => x.should.equal(5) }));
     it("input()", () => {
         const bag1 = bag.input<string>();

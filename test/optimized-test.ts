@@ -15,7 +15,7 @@ function check<T>(bag: optimized.Node<T>, visitor: OptionalBagVisitor<T>) {
     bag.implementation(<optimized.NodeVisitor<T, void>> visitor);
 }
 
-describe("optimized.ts", function() {
+describe("namespace optimized", function() {
     it("input()", () => {
         optimized.input("7").id.should.equal("7");
         const b = optimized.input("5");
