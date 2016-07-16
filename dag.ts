@@ -1,34 +1,33 @@
-import * as Optimized from "./optimized";
-import { bag } from "./index";
+import { bag, optimized } from "./index";
 
 export class Dag {
 
     private readonly _map: { [id: string]: any } = {};
 
-    get<T>(bag: bag.Bag<T>): Optimized.Bag<T> {
+    get<T>(bag: bag.Bag<T>): optimized.Bag<T> {
         const id = bag.id;
         const cached = this._map[id];
         if (cached !== undefined) {
             return cached;
         }
         const getOpimized = <I>(b: bag.Bag<I>) => this.get(b);
-        class Visitor implements bag.Visitor<T, Optimized.Bag<T>> {
-            flatten<I>(value: bag.Flatten<T, I>): Optimized.Bag<T> {
+        class Visitor implements bag.Visitor<T, optimized.Bag<T>> {
+            flatten<I>(value: bag.Flatten<T, I>): optimized.Bag<T> {
                 return getOpimized(value.input).flatten(id, value.func);
             }
-            disjointUnion(value: bag.DisjointUnion<T>): Optimized.Bag<T> {
+            disjointUnion(value: bag.DisjointUnion<T>): optimized.Bag<T> {
                 return getOpimized(value.a).disjointUnion(id, getOpimized(value.b));
             }
-            one(value: T): Optimized.Bag<T> {
-                return Optimized.one(id, value);
+            one(value: T): optimized.Bag<T> {
+                return optimized.one(id, value);
             }
-            input(): Optimized.Bag<T> {
-                return Optimized.input<T>(id);
+            input(): optimized.Bag<T> {
+                return optimized.input<T>(id);
             }
-            groupBy(value: bag.GroupBy<T>): Optimized.Bag<T> {
+            groupBy(value: bag.GroupBy<T>): optimized.Bag<T> {
                 return getOpimized(value.input).groupBy(id, value.toKey, value.reduce);
             }
-            product<A, B>(value: bag.Product<T, A, B>): Optimized.Bag<T> {
+            product<A, B>(value: bag.Product<T, A, B>): optimized.Bag<T> {
                 return getOpimized(value.a).product(id, getOpimized(value.b), value.func);
             }
         }

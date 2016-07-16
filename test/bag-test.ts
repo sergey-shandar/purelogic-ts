@@ -21,12 +21,12 @@ function check<T>(bag: bag.Bag<T>, visitor: Visitor<T>) {
 describe("bag.ts", function() {
     it("one()", () => check(bag.one(5), { one: x => x.should.equal(5) }));
     it("input()", () => {
-        const bag1 = bag.input<string>()
+        const bag1 = bag.input<string>();
         const bag2 = bag.one(8);
         parseInt(bag1.id).should.equal(parseInt(bag2.id) - 1);
         check(bag1, {
             input: () => null
-        })
+        });
     });
     describe("class Bag", function() {
         it("flatten()", () => {
@@ -71,7 +71,7 @@ describe("bag.ts", function() {
             const a = bag.one(6);
             check(a.map(x => x / 2), {
                 flatten: <I>(x: bag.Flatten<number, I>) => {
-                    x.input.should.equal(a)
+                    x.input.should.equal(a);
                     x.func(<any> 10).should.deep.equal([5]);
                 }
             });
@@ -106,7 +106,7 @@ describe("bag.ts", function() {
             check(a.dif(b), {
                 groupBy: (x: bag.GroupBy<any>) => {
 
-                    x.toKey(new bag.Dif("hello", 1, 2)).should.equal('"hello"');
+                    x.toKey(new bag.Dif("hello", 1, 2)).should.equal("\"hello\"");
                     x.reduce(new bag.Dif("hello", 2, 3), new bag.Dif("world", 4, 8)).should.deep
                         .equal(new bag.Dif("hello", 6, 11));
 

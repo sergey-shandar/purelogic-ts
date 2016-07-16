@@ -60,6 +60,6 @@ describe("dag.ts", function() {
             xProduct.array.length.should.equal(1);
             xProduct.id.should.equal(product.id);
             xProduct.array[0].nodeId().should.equal(product.id);
-        })
-    })
-})
+        });
+    });
+});
