@@ -1,13 +1,12 @@
-import { SyncMem } from "../syncmem";
-import { bag } from "../index";
+import { bag, syncmem } from "../index";
 import * as chai from "chai";
 
 chai.should();
 
-describe("syncmem.ts", function() {
+describe("namespace syncmem", function() {
     describe("class SyncMem", function() {
         it("set()", () => {
-            const syncMem = new SyncMem();
+            const syncMem = new syncmem.SyncMem();
             const input = bag.input<number>();
             const f = () => [123];
             syncMem.set(input, f);
@@ -17,7 +16,7 @@ describe("syncmem.ts", function() {
                 .should.deep.equal([123, 246, 369]);
         });
         it("get()", () => {
-            const syncMem = new SyncMem();
+            const syncMem = new syncmem.SyncMem();
             const r = bag.one("Hello world!");
             syncMem.get(r)().should.deep.equal(["Hello world!"]);
             syncMem.get(r.flatten(x => [x, x]).reduce((a, b) => a + b))().should.deep
