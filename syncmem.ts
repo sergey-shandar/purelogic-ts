@@ -1,7 +1,6 @@
 import * as optimized from "./optimized";
 import * as dag from "./dag";
-import { array, bag } from "./index";
-import * as lazy from "./lazy";
+import { array, bag, lazy } from "./index";
 
 export type GetArray<T> = () => T[];
 

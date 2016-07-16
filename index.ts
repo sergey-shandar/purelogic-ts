@@ -24,6 +24,20 @@ export namespace array {
     }
 }
 
+export namespace lazy {
+    export function lazy<T>(f: () => T): () => T {
+        let called = false;
+        let result: T;
+        return () => {
+            if (!called) {
+                result = f();
+                called = true;
+            }
+            return result;
+        };
+    }
+}
+
 export namespace bag {
 
     export type KeyFunc<T> = (value: T) => string;
