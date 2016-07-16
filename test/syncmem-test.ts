@@ -1,5 +1,5 @@
 import { SyncMem } from "../syncmem";
-import * as bag from "../bag";
+import { bag } from "../index";
 import * as chai from "chai";
 
 chai.should();

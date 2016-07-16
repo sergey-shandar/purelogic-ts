@@ -1,11 +1,10 @@
-import { flatten, array } from "./index";
-import { KeyFunc, ReduceFunc, ProductFunc } from "./bag";
+import { flatten, array, bag } from "./index";
 
 export interface NodeVisitor<T, R> {
     input(): R;
     one(value: T): R;
-    groupBy(inputs: Bag<T>, toKey: KeyFunc<T>, reduce: ReduceFunc<T>): R;
-    product<A, B>(a: Bag<A>, b: Bag<B>, func: ProductFunc<A, B, T>): R;
+    groupBy(inputs: Bag<T>, toKey: bag.KeyFunc<T>, reduce: bag.ReduceFunc<T>): R;
+    product<A, B>(a: Bag<A>, b: Bag<B>, func: bag.ProductFunc<A, B, T>): R;
 }
 
 export type NodeImplementation<T> = <R>(visitor: NodeVisitor<T, R>) => R;
@@ -74,14 +73,14 @@ export class Bag<T> {
         public readonly array: Link<T>[]) {
     }
 
-    groupBy(id: string, toKey: KeyFunc<T>, reduce: ReduceFunc<T>): Bag<T> {
+    groupBy(id: string, toKey: bag.KeyFunc<T>, reduce: bag.ReduceFunc<T>): Bag<T> {
         return new Node(
                 id,
                 <R>(visitor: NodeVisitor<T, R>) => visitor.groupBy(this, toKey, reduce))
             .bag();
     }
 
-    product<B, O>(id: string, b: Bag<B>, func: ProductFunc<T, B, O>): Bag<O> {
+    product<B, O>(id: string, b: Bag<B>, func: bag.ProductFunc<T, B, O>): Bag<O> {
         return new Node(id, <R>(visitor: NodeVisitor<O, R>) => visitor.product(this, b, func))
             .bag();
     }

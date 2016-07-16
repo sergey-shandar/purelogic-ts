@@ -1,7 +1,7 @@
 import "mocha";
 import * as chai from "chai";
 import { Dag } from "../dag";
-import * as B from "../bag";
+import { bag } from "../index";
 
 chai.should();
 
@@ -9,7 +9,7 @@ describe("dag.ts", function() {
     describe("class Dag", function() {
         it("get()", () => {
             const dag = new Dag();
-            const one = B.one("Hello world!");
+            const one = bag.one("Hello world!");
             const xOne = dag.get(one);
             xOne.array.length.should.equal(1);
             xOne.id.should.equal(one.id);
@@ -17,7 +17,7 @@ describe("dag.ts", function() {
             const xOne2 = dag.get(one);
             xOne.should.equal(xOne2);
 
-            const input = B.input<number>();
+            const input = bag.input<number>();
             const xInput = dag.get(input);
             xInput.array.length.should.equal(1);
             xInput.id.should.equal(input.id);

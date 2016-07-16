@@ -1,16 +1,15 @@
 import "mocha";
 import * as chai from "chai";
 import { Node, NodeVisitor, Bag, input, LinkValue, one } from "../optimized";
-import { ReduceFunc, KeyFunc, ProductFunc } from "../bag";
-import { flatten } from "../index";
+import { flatten, bag } from "../index";
 
 chai.should();
 
 interface OptionalBagVisitor<T> {
     input?: (id: number) => void;
     one?: (value: T) => void;
-    groupBy?: (inputs: Bag<T>, toKey: KeyFunc<T>, reduce: ReduceFunc<T>) => void;
-    product?: <A, B>(a: Bag<A>, b: Bag<B>, func: ProductFunc<A, B, T>) => void;
+    groupBy?: (inputs: Bag<T>, toKey: bag.KeyFunc<T>, reduce: bag.ReduceFunc<T>) => void;
+    product?: <A, B>(a: Bag<A>, b: Bag<B>, func: bag.ProductFunc<A, B, T>) => void;
 }
 
 function check<T>(bag: Node<T>, visitor: OptionalBagVisitor<T>) {
