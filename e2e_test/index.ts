@@ -1,2 +1,3 @@
-import * as purelogic from "purelogic";
+import { bag } from "purelogic-ts";
 
+bag.one(6);

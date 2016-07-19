@@ -9,6 +9,6 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
-    "purelogic-ts": "0.0.0"
+    "purelogic-ts": "0.0.1"
   }
 }
