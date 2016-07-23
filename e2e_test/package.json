@@ -4,11 +4,14 @@
   "description": "E2E test for purelogic-ts",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "tsc && browserify index.js -o bundle.js"
   },
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
     "purelogic-ts": "0.0.1"
+  },
+  "devDependencies": {
+    "browserify": "^13.0.1"
   }
 }
