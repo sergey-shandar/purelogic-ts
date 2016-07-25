@@ -1,21 +1,21 @@
 import "mocha";
-import { ref, Ref } from "../array";
+import { array } from "../index";
 import * as chai from "chai";
 
 chai.should();
 
-describe("array.ts", function() {
+describe("namespace array", function() {
     it("ref()", () => {
         const a: number[] = [3, 4, 5];
-        ref(a).array.should.equal(a);
+        array.ref(a).array.should.equal(a);
     });
     describe("class Ref", function() {
         it("flatten()", () =>
-            ref([3, 4, 5]).flatten(x => [x, x * 2]).should.deep.equal([3, 6, 4, 8, 5, 10])
+            array.ref([3, 4, 5]).flatten(x => [x, x * 2]).should.deep.equal([3, 6, 4, 8, 5, 10])
         );
         it("spliceOne()", () => {
             const a: string[] = ["x", "y", "z"];
-            ref(a).spliceOne(1).should.equal("y");
+            array.ref(a).spliceOne(1).should.equal("y");
             a.should.deep.equal(["x", "z"]);
         });
     });
