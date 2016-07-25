@@ -1,5 +1,4 @@
-import * as bag from "../bag";
-import * as syncmem from "../syncmem";
+import { bag, syncmem } from "../index";
 
 // Data Structure
 
