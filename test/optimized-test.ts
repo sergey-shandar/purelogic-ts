@@ -1,6 +1,6 @@
 import "mocha";
 import * as chai from "chai";
-import { flatten, bag, optimized } from "../index";
+import { flatMap, bag, optimized } from "../index";
 
 chai.should();
 
@@ -55,7 +55,7 @@ describe("namespace optimized", function() {
             bag.array.length.should.equal(1);
             bag.array[0].implementation(<I>(x: optimized.LinkValue<string, I>) => {
                 x.node.should.equal(a);
-                x.func.should.equal(flatten.identity);
+                x.func.should.equal(flatMap.identity);
             });
         });
     });
@@ -63,17 +63,17 @@ describe("namespace optimized", function() {
         it("nodeId()", () => {
             optimized.one("42", "hello world").array[0].nodeId().should.equal("42");
         });
-        it("flatten()", () => {
+        it("flatMap()", () => {
             const a = new optimized.Node(
                 "0", <R>(visitor: optimized.NodeVisitor<number, R>) => visitor.one(10));
             const f = (x: number) => [x, x * x];
-            const link = a.link(flatten.identity).flatten(f);
+            const link = a.link(flatMap.identity).flatMap(f);
             link.implementation(<I>(x: optimized.LinkValue<number, I>) => {
                 x.node.should.equal(a);
                 // an identity function should be removed
                 x.func.should.equal(f);
             });
-            const link2 = link.flatten(x => [x, x + 1]);
+            const link2 = link.flatMap(x => [x, x + 1]);
             link2.implementation(<I>(x: optimized.LinkValue<number, I>) => {
                 x.node.should.equal(a);
                 x.func(<I> <any> 10).should.deep.equal([10, 11, 100, 101]);
@@ -82,7 +82,7 @@ describe("namespace optimized", function() {
         it("addFunc()", () => {
             const x = new optimized.Node(
                 "0", <R>(visitor: optimized.NodeVisitor<string, R>) => visitor.one("something"));
-            const link = x.link(flatten.identity).addFunc(() => () => ["xxx"]);
+            const link = x.link(flatMap.identity).addFunc(() => () => ["xxx"]);
             link.implementation(<I>(bb: optimized.LinkValue<string, I>) => {
                 bb.node.should.equal(x);
                 bb.func(<I> <any> "x").should.deep.equal(["x", "xxx"]);
@@ -93,7 +93,7 @@ describe("namespace optimized", function() {
         it("constructor()", () => {
             const node = new optimized.Node(
                 "0", <R>(visitor: optimized.NodeVisitor<number, R>) => visitor.one(10));
-            const x = [node.link(flatten.identity)];
+            const x = [node.link(flatMap.identity)];
             const bag = new optimized.Bag("43", x);
             bag.id.should.equal("43");
             bag.array.should.equal(x);
@@ -131,10 +131,10 @@ describe("namespace optimized", function() {
                 });
             });
         });
-        it("flatten()", () => {
+        it("flatMap()", () => {
             const a = optimized.one("123", 9);
             const f = (x: number) => [x * 2];
-            const r = a.flatten("1", f);
+            const r = a.flatMap("1", f);
             r.array[0].implementation(<I>(b: optimized.LinkValue<number, I>) => {
                 b.node.id.should.equal("123");
                 b.func.should.equal(f);

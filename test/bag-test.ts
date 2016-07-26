@@ -5,7 +5,7 @@ import * as chai from "chai";
 chai.should();
 
 interface Visitor<T> {
-    flatten?: <I>(x: bag.Flatten<T, I>) => void;
+    flatMap?: <I>(x: bag.FlatMap<T, I>) => void;
     disjointUnion?: (x: bag.DisjointUnion<T>) => void;
     one?: (value: T) => void;
     input?: (id: number) => void;
@@ -29,12 +29,12 @@ describe("namespace bag", function() {
         });
     });
     describe("class Bag", function() {
-        it("flatten()", () => {
+        it("flatMap()", () => {
             const i = bag.input<number>();
             const f = (x: number) => [x, x * 2, x * 3];
-            check(i.flatten(f), {
-                flatten: <I>(x: bag.Flatten<number, I>) => {
-                    x.should.deep.equal(new bag.Flatten(i, f));
+            check(i.flatMap(f), {
+                flatMap: <I>(x: bag.FlatMap<number, I>) => {
+                    x.should.deep.equal(new bag.FlatMap(i, f));
                 }
             });
         });
@@ -70,7 +70,7 @@ describe("namespace bag", function() {
         it("map()", () => {
             const a = bag.one(6);
             check(a.map(x => x / 2), {
-                flatten: <I>(x: bag.Flatten<number, I>) => {
+                flatMap: <I>(x: bag.FlatMap<number, I>) => {
                     x.input.should.equal(a);
                     x.func(<any> 10).should.deep.equal([5]);
                 }
@@ -79,7 +79,7 @@ describe("namespace bag", function() {
         it("filter()", () => {
             const a = bag.one({ a: 5, b: "hello" });
             check(a.filter(x => x.a > 3), {
-                flatten: (x: bag.Flatten<any, any>) => {
+                flatMap: (x: bag.FlatMap<any, any>) => {
                     x.input.should.equal(a);
                     x.func({ a: 5, b: "net" }).should.deep.equal([{ a: 5, b: "net" }]);
                     x.func({ a: 0, b: "net" }).should.deep.equal([]);
@@ -112,7 +112,7 @@ describe("namespace bag", function() {
 
                     check(x.input, {
                         disjointUnion: xx => check(xx.a, {
-                            flatten: (y: bag.Flatten<any, any>) => {
+                            flatMap: (y: bag.FlatMap<any, any>) => {
                                 y.input.should.equal(a);
                                 y.func("hello").should.deep.equal(
                                     [new bag.Dif("hello", 1, 0)]);

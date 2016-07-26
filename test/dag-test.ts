@@ -22,26 +22,26 @@ describe("namespac dag", function() {
             xInput.id.should.equal(input.id);
             xOne.should.not.equal(xInput);
 
-            const flatten = one.map(x => x + "xxx");
-            const xFlatten = d.get(flatten);
-            xFlatten.array.length.should.equal(1);
-            xFlatten.id.should.equal(flatten.id);
-            xFlatten.array[0].nodeId().should.equal(one.id);
-            xFlatten.id.should.not.equal(one.id);
+            const flatMap = one.map(x => x + "xxx");
+            const xFlatMap = d.get(flatMap);
+            xFlatMap.array.length.should.equal(1);
+            xFlatMap.id.should.equal(flatMap.id);
+            xFlatMap.array[0].nodeId().should.equal(one.id);
+            xFlatMap.id.should.not.equal(one.id);
 
-            const disjointUnion = flatten.disjointUnion(one);
+            const disjointUnion = flatMap.disjointUnion(one);
             const xDisjointUnion = d.get(disjointUnion);
             xDisjointUnion.array.length.should.equal(1);
             xDisjointUnion.array[0].nodeId().should.equal(one.id);
             xDisjointUnion.id.should.equal(disjointUnion.id);
 
-            const flatten2 = input.filter(x => x > 0).map(x => x.toString());
-            const xFlatten2 = d.get(flatten2);
-            xFlatten2.array.length.should.equal(1);
-            xFlatten2.array[0].nodeId().should.equal(input.id);
-            xFlatten2.id.should.equal(flatten2.id);
+            const flatMap2 = input.filter(x => x > 0).map(x => x.toString());
+            const xFlatMap2 = d.get(flatMap2);
+            xFlatMap2.array.length.should.equal(1);
+            xFlatMap2.array[0].nodeId().should.equal(input.id);
+            xFlatMap2.id.should.equal(flatMap2.id);
 
-            const disjointUnion2 = flatten.disjointUnion(flatten2);
+            const disjointUnion2 = flatMap.disjointUnion(flatMap2);
             const xDisjointUnion2 = d.get(disjointUnion2);
             xDisjointUnion2.array.length.should.equal(2);
             xDisjointUnion2.id.should.equal(disjointUnion2.id);
