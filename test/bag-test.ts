@@ -122,5 +122,13 @@ describe("namespace bag", function() {
                 },
             });
         });
+        it("join()", () => {
+            const a = bag.one("hello");
+            const b = bag.one(56);
+            const j = a.join(b, x => x, x => x.toString(), (x, _) => x, (x, _) => x);
+            check(j, {
+                groupBy: () => {}
+            });
+        });
     });
 });
