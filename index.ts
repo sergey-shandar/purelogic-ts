@@ -178,8 +178,8 @@ export namespace bag {
 
         join<B>(
             b: Bag<B>,
-            keyT: (t: T) => string,
-            keyB: (b: B) => string,
+            keyT: KeyFunc<T>,
+            keyB: KeyFunc<B>,
             reduceT: ReduceFunc<T>,
             reduceB: ReduceFunc<B>):
 
@@ -200,6 +200,7 @@ export namespace bag {
                     return reduce(x, y);
                 };
             }
+
             return bagC.groupBy(
                 x => x.key,
                 (x, y) => join(
