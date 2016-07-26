@@ -11,9 +11,9 @@ export function lazy<T>(f: () => T): () => T {
 }
 
 /**
- * Flatten functions.
+ * Flat Map functions.
  */
-export namespace flatten {
+export namespace flatMap {
     export type Func<I, O> = (value: I) => O[];
     export function identity<T>(value: T): T[] { return [value]; }
 }
@@ -27,7 +27,7 @@ export namespace array {
 
         constructor(public readonly array: T[]) {}
 
-        flatten<O>(f: flatten.Func<T, O>): O[] {
+        flatMap<O>(f: flatMap.Func<T, O>): O[] {
             const result: O[] = [];
             return result.concat(...this.array.map(f));
         }
@@ -53,10 +53,10 @@ export namespace bag {
 
     export type ProductFunc<A, B, O> = (a: A, b: B) => O[];
 
-    export class Flatten<T, I> {
+    export class FlatMap<T, I> {
         constructor(
             public readonly input: Bag<I>,
-            public readonly func: flatten.Func<I, T>) {}
+            public readonly func: flatMap.Func<I, T>) {}
     }
 
     export class DisjointUnion<T> {
@@ -83,7 +83,7 @@ export namespace bag {
         /**
          * LINQ: SelectMany
          */
-        flatten<I>(value: Flatten<T, I>): R;
+        flatMap<I>(value: FlatMap<T, I>): R;
         disjointUnion(value: DisjointUnion<T>): R;
         one(value: T): R;
         input(): R;
@@ -134,8 +134,8 @@ export namespace bag {
         /**
          * LINQ: SelectMany
          */
-        flatten<O>(func: flatten.Func<T, O>): Bag<O> {
-            return new Bag(<R>(visitor: Visitor<O, R>) => visitor.flatten(new Flatten(this, func)));
+        flatMap<O>(func: flatMap.Func<T, O>): Bag<O> {
+            return new Bag(<R>(visitor: Visitor<O, R>) => visitor.flatMap(new FlatMap(this, func)));
         }
 
         disjointUnion(b: Bag<T>): Bag<T> {
@@ -159,14 +159,14 @@ export namespace bag {
          * LINQ: Select
          */
         map<O>(func: (value: T) => O): Bag<O> {
-            return this.flatten(value => [func(value)]);
+            return this.flatMap(value => [func(value)]);
         }
 
         /**
          * LINQ: Where
          */
         filter(func: (value: T) => boolean): Bag<T> {
-            return this.flatten(value => func(value) ? [value] : []);
+            return this.flatMap(value => func(value) ? [value] : []);
         }
 
         compact(): Bag<T> {
@@ -245,20 +245,20 @@ export namespace optimized {
             public readonly id: string,
             public readonly implementation: NodeImplementation<T>) {}
 
-        link<O>(func: flatten.Func<T, O>): Link<O> {
+        link<O>(func: flatMap.Func<T, O>): Link<O> {
             const value = new LinkValue(this, func);
             return new Link(<R>(visitor: LinkVisitor<O, R>) => visitor(value));
         }
 
         bag(): Bag<T> {
-            return new Bag(this.id, [this.link(flatten.identity)]);
+            return new Bag(this.id, [this.link(flatMap.identity)]);
         }
     }
 
     export class LinkValue<T, I> {
         constructor(
             public readonly node: Node<I>,
-            public readonly func: flatten.Func<I, T>) {}
+            public readonly func: flatMap.Func<I, T>) {}
     }
 
     export type LinkVisitor<T, R> = <I>(value: LinkValue<T, I>) => R;
@@ -274,18 +274,18 @@ export namespace optimized {
             return this.implementation(<I>(x: LinkValue<T, I>) => x.node.id);
         }
 
-        flatten<O>(func: flatten.Func<T, O>): Link<O> {
+        flatMap<O>(func: flatMap.Func<T, O>): Link<O> {
             function visitor<I>(x: LinkValue<T, I>): Link<O> {
                 const f = x.func;
-                const newFunc = f !== flatten.identity
-                    ? (value: I) => array.ref(f(value)).flatten(func)
-                    : <flatten.Func<I, O>> <any> func;
+                const newFunc = f !== flatMap.identity
+                    ? (value: I) => array.ref(f(value)).flatMap(func)
+                    : <flatMap.Func<I, O>> <any> func;
                 return x.node.link(newFunc);
             }
             return this.implementation(visitor);
         }
 
-        addFunc(getFunc: <I>() => flatten.Func<I, T>): Link<T> {
+        addFunc(getFunc: <I>() => flatMap.Func<I, T>): Link<T> {
             function visitor<I>(link: LinkValue<T, I>): Link<T> {
                 const f = link.func;
                 const fNew = getFunc<I>();
@@ -313,8 +313,8 @@ export namespace optimized {
                 .bag();
         }
 
-        flatten<O>(id: string, func: flatten.Func<T, O>): Bag<O> {
-            return new Bag(id, this.array.map(link => link.flatten(func)));
+        flatMap<O>(id: string, func: flatMap.Func<T, O>): Bag<O> {
+            return new Bag(id, this.array.map(link => link.flatMap(func)));
         }
 
         disjointUnion(id: string, b: Bag<T>): Bag<T> {
@@ -324,7 +324,7 @@ export namespace optimized {
             b.array.forEach(bLink => {
                 function bVisitor<B>(x: LinkValue<T, B>): void {
                     const i = aLinks.findIndex(aLink => aLink.nodeId() === x.node.id);
-                    function getFunc<I>(): flatten.Func<I, T> { return <any> x.func; }
+                    function getFunc<I>(): flatMap.Func<I, T> { return <any> x.func; }
                     bLinks.push(i !== -1
                         ? array.ref(aLinks).spliceOne(i).addFunc(getFunc)
                         : bLink
@@ -362,8 +362,8 @@ export namespace dag {
             }
             const getOpimized = <I>(b: bag.Bag<I>) => this.get(b);
             class Visitor implements bag.Visitor<T, optimized.Bag<T>> {
-                flatten<I>(value: bag.Flatten<T, I>): optimized.Bag<T> {
-                    return getOpimized(value.input).flatten(id, value.func);
+                flatMap<I>(value: bag.FlatMap<T, I>): optimized.Bag<T> {
+                    return getOpimized(value.input).flatMap(id, value.func);
                 }
                 disjointUnion(value: bag.DisjointUnion<T>): optimized.Bag<T> {
                     return getOpimized(value.a).disjointUnion(id, getOpimized(value.b));
@@ -414,10 +414,10 @@ export namespace syncmem {
             const links = o.array
                 .map(link => link.implementation(<I>(value: optimized.LinkValue<T, I>) => {
                     // NOTE: possible optimization:
-                    // if (f === flatten.identity) { return nodeFunc; }
+                    // if (f === flatMap.identity) { return nodeFunc; }
                     const f = value.func;
                     const nodeFunc = this._fromNode(value.node);
-                    return () => array.ref(nodeFunc()).flatten(f);
+                    return () => array.ref(nodeFunc()).flatMap(f);
                 }));
             const result = this._map[id];
             if (result !== undefined) {
@@ -426,7 +426,7 @@ export namespace syncmem {
 
             // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
             const refLinks = array.ref(links);
-            const newResult = () => refLinks.flatten(f => f());
+            const newResult = () => refLinks.flatMap(f => f());
 
             this._map[id] = newResult;
             return newResult;
@@ -469,7 +469,7 @@ export namespace syncmem {
                     return lazy(() => {
                         const aArray = array.ref(getA());
                         const bArray = array.ref(getB());
-                        return aArray.flatten(av => bArray.flatten(bv => func(av, bv)));
+                        return aArray.flatMap(av => bArray.flatMap(bv => func(av, bv)));
                     });
                 }
             }

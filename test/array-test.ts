@@ -10,8 +10,8 @@ describe("namespace array", function() {
         array.ref(a).array.should.equal(a);
     });
     describe("class Ref", function() {
-        it("flatten()", () =>
-            array.ref([3, 4, 5]).flatten(x => [x, x * 2]).should.deep.equal([3, 6, 4, 8, 5, 10])
+        it("flatMap()", () =>
+            array.ref([3, 4, 5]).flatMap(x => [x, x * 2]).should.deep.equal([3, 6, 4, 8, 5, 10])
         );
         it("spliceOne()", () => {
             const a: string[] = ["x", "y", "z"];
