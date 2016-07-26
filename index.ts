@@ -101,6 +101,13 @@ export namespace bag {
 
     let bagCounter: number = 0;
 
+    export class Join<A, B> {
+        constructor(
+            public readonly key: string,
+            public readonly a: A|undefined,
+            public readonly b: B|undefined) {}
+    }
+
     export class Bag<T> {
 
         readonly id: string;
@@ -167,6 +174,38 @@ export namespace bag {
             return aDif.disjointUnion(bDif).groupBy(
                 v => JSON.stringify(v.value),
                 (x, y) => new Dif(x.value, x.a + y.a, x.b + y.b));
+        }
+
+        join<B>(
+            b: Bag<B>,
+            keyT: (t: T) => string,
+            keyB: (b: B) => string,
+            reduceT: ReduceFunc<T>,
+            reduceB: ReduceFunc<B>):
+
+            Bag<Join<T, B>> {
+
+            function join(k: string, t: T|undefined, b: B|undefined) {
+                return new Join(k, t, b);
+            }
+
+            const bagT = this.map(x => join(keyT(x), x, undefined));
+            const bagB = b.map(x => join(keyB(x), undefined, x));
+            const bagC = bagT.disjointUnion(bagB);
+
+            function reduceOptional<M>(reduce: ReduceFunc<M>) {
+                return (x: M|undefined, y: M|undefined) => {
+                    if (x === undefined) { return y; }
+                    if (y === undefined) { return x; }
+                    return reduce(x, y);
+                };
+            }
+            return bagC.groupBy(
+                x => x.key,
+                (x, y) => join(
+                    x.key,
+                    reduceOptional(reduceT)(x.a, y.a),
+                    reduceOptional(reduceB)(x.b, y.b)));
         }
     }
 }
