@@ -14,7 +14,7 @@ PureLogic-TS is an
 
 - Input
 - One
-- Flatten
+- FlatMap
 - DisjointUnion
 - GroupBy. The key is always a string. [ES6 Map](https://tc39.github.io/ecma262/#sec-map-objects) shouldn't be used because some back-ends may serialize objects.
 - Product
