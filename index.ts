@@ -10,11 +10,17 @@ export function lazy<T>(f: () => T): () => T {
     };
 }
 
+/**
+ * Flatten functions.
+ */
 export namespace flatten {
     export type Func<I, O> = (value: I) => O[];
     export function identity<T>(value: T): T[] { return [value]; }
 }
 
+/**
+ * Array utilities.
+ */
 export namespace array {
 
     export class Ref<T> {
@@ -36,6 +42,9 @@ export namespace array {
     }
 }
 
+/**
+ * Bag type and related functions.
+ */
 export namespace bag {
 
     export type KeyFunc<T> = (value: T) => string;
@@ -88,7 +97,10 @@ export namespace bag {
     export type Implementation<T> = <R>(visitor: Visitor<T, R>) => R;
 
     export class Dif<T> {
-        constructor(public readonly value: T, public readonly a: number, public readonly b: number) {}
+        constructor(
+            public readonly value: T,
+            public readonly a: number,
+            public readonly b: number) {}
     }
 
     export function one<T>(value: T): Bag<T> {
@@ -112,7 +124,9 @@ export namespace bag {
 
         readonly id: string;
 
-        constructor(public readonly implementation: Implementation<T>) {
+        constructor(
+            public readonly implementation: Implementation<T>) {
+
             this.id = bagCounter.toString();
             ++bagCounter;
         }
@@ -211,6 +225,9 @@ export namespace bag {
     }
 }
 
+/**
+ * Optimized graph.
+ */
 export namespace optimized {
 
     export interface NodeVisitor<T, R> {
@@ -226,8 +243,7 @@ export namespace optimized {
 
         constructor(
             public readonly id: string,
-            public readonly implementation: NodeImplementation<T>) {
-        }
+            public readonly implementation: NodeImplementation<T>) {}
 
         link<O>(func: flatten.Func<T, O>): Link<O> {
             const value = new LinkValue(this, func);
@@ -242,8 +258,7 @@ export namespace optimized {
     export class LinkValue<T, I> {
         constructor(
             public readonly node: Node<I>,
-            public readonly func: flatten.Func<I, T>) {
-        }
+            public readonly func: flatten.Func<I, T>) {}
     }
 
     export type LinkVisitor<T, R> = <I>(value: LinkValue<T, I>) => R;
@@ -252,7 +267,8 @@ export namespace optimized {
 
     export class Link<T> {
 
-        constructor(public readonly implementation: LinkImplementation<T>) {}
+        constructor(
+            public readonly implementation: LinkImplementation<T>) {}
 
         nodeId(): string {
             return this.implementation(<I>(x: LinkValue<T, I>) => x.node.id);
@@ -283,8 +299,7 @@ export namespace optimized {
 
         constructor(
             public readonly id: string,
-            public readonly array: Link<T>[]) {
-        }
+            public readonly array: Link<T>[]) {}
 
         groupBy(id: string, toKey: bag.KeyFunc<T>, reduce: bag.ReduceFunc<T>): Bag<T> {
             return new Node(
@@ -330,6 +345,9 @@ export namespace optimized {
     }
 }
 
+/**
+ * DAG
+ */
 export namespace dag {
 
     export class Dag {
@@ -370,6 +388,9 @@ export namespace dag {
     }
 }
 
+/**
+ * Synchronous memory back-end.
+ */
 export namespace syncmem {
 
     export type GetArray<T> = () => T[];
@@ -457,4 +478,7 @@ export namespace syncmem {
             return newResult;
         }
     }
+}
+
+export namespace asyncmem {
 }
