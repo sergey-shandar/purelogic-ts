@@ -12,7 +12,11 @@ export function lazy<T>(f: () => T): () => T {
 
 export class CacheMap<T> {
 
-    private readonly _map: { [id: string]: T } = {};
+    readonly _map: { [id: string]: T } = {};
+
+    set(id: string, value: T): void {
+        this._map[id] = value;
+    }
 
     get(id: string, create: () => T): T {
         let result = this._map[id];
@@ -407,12 +411,12 @@ export namespace syncmem {
 
     export class SyncMem {
 
-        private readonly _map: { [id: string]: GetArray<any> } = {};
+        private readonly _map = new CacheMap<GetArray<any>>();
 
         private readonly _dag: dag.Dag = new dag.Dag();
 
         set<T>(input: bag.Bag<T>, getArray: GetArray<T>): void {
-            this._map[input.id] = getArray;
+           this._map.set(input.id, getArray);
         }
 
         get<T>(b: bag.Bag<T>): GetArray<T> {
@@ -421,70 +425,74 @@ export namespace syncmem {
 
         private _get<T>(o: optimized.Bag<T>): GetArray<T> {
             const id = o.id;
-            const result = this._map[id];
+            const result = this._map._map[id];
             if (result !== undefined) {
                 return result;
             }
-            const links = o.array
-                .map(link => link.implementation(<I>(value: optimized.LinkValue<T, I>) => {
-                    // NOTE: possible optimization:
-                    // if (f === flatMap.identity) { return nodeFunc; }
-                    const f = value.func;
-                    const nodeFunc = this._fromNode(value.node);
-                    return () => array.ref(nodeFunc()).flatMap(f);
-                }));
-            // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
-            const refLinks = array.ref(links);
+                const links = o.array
+                    .map(link => link.implementation(<I>(value: optimized.LinkValue<T, I>) => {
+                        // NOTE: possible optimization:
+                        // if (f === flatMap.identity) { return nodeFunc; }
+                        const f = value.func;
+                        const nodeFunc = this._fromNode(value.node);
+                        return () => array.ref(nodeFunc()).flatMap(f);
+                    }));
+                // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
+                const refLinks = array.ref(links);
             const newResult = () => refLinks.flatMap(f => f());
 
-            this._map[id] = newResult;
+            this._map._map[id] = newResult;
             return newResult;
         }
 
         private _fromNode<T>(n: optimized.Node<T>): GetArray<T> {
             const id = n.id;
             const map = this._map;
-            const result = map[id];
+            const result = map._map[id];
             if (result !== undefined) {
                 return result;
             }
-            const get = <I>(b: optimized.Bag<I>) => this._get(b);
+                const get = <I>(b: optimized.Bag<I>) => this._get(b);
 
-            class Visitor implements optimized.NodeVisitor<T, GetArray<T>> {
+                class Visitor implements optimized.NodeVisitor<T, GetArray<T>> {
 
-                input(): GetArray<T> { return () => map[id](); }
+                    input(): GetArray<T> { return () => map._map[id](); }
 
-                one(value: T): GetArray<T> { return () => [value]; }
+                    one(value: T): GetArray<T> { return () => [value]; }
 
-                groupBy(
-                    input: optimized.Bag<T>, toKey: bag.KeyFunc<T>, reduce: bag.ReduceFunc<T>
-                ): GetArray<T> {
-                    const inputLazyArray = get(input);
-                    return lazy(() => {
-                        const map: { [id: string]: T; } = {};
-                        inputLazyArray().forEach(value => {
-                            const key = toKey(value);
-                            const current = map[key];
-                            map[key] = current !== undefined ? reduce(current, value) : value;
+                    groupBy(
+                        input: optimized.Bag<T>,
+                        toKey: bag.KeyFunc<T>,
+                        reduce: bag.ReduceFunc<T>):
+
+                        GetArray<T> {
+
+                        const inputLazyArray = get(input);
+                        return lazy(() => {
+                            const map: { [id: string]: T; } = {};
+                            inputLazyArray().forEach(value => {
+                                const key = toKey(value);
+                                const current = map[key];
+                                map[key] = current !== undefined ? reduce(current, value) : value;
+                            });
+                            return Object.keys(map).map(k => map[k]);
                         });
-                        return Object.keys(map).map(k => map[k]);
-                    });
-                }
+                    }
 
-                product<A, B>(
-                    a: optimized.Bag<A>, b: optimized.Bag<B>, func: bag.ProductFunc<A, B, T>
-                ): GetArray<T> {
-                    const getA = get(a);
-                    const getB = get(b);
-                    return lazy(() => {
-                        const aArray = array.ref(getA());
-                        const bArray = array.ref(getB());
-                        return aArray.flatMap(av => bArray.flatMap(bv => func(av, bv)));
-                    });
+                    product<A, B>(
+                        a: optimized.Bag<A>, b: optimized.Bag<B>, func: bag.ProductFunc<A, B, T>
+                    ): GetArray<T> {
+                        const getA = get(a);
+                        const getB = get(b);
+                        return lazy(() => {
+                            const aArray = array.ref(getA());
+                            const bArray = array.ref(getB());
+                            return aArray.flatMap(av => bArray.flatMap(bv => func(av, bv)));
+                        });
+                    }
                 }
-            }
             const newResult = n.implementation(new Visitor());
-            map[id] = newResult;
+            map._map[id] = newResult;
             return newResult;
         }
     }
