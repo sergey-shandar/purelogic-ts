@@ -33,5 +33,9 @@
     "mocha": "^2.5.3",
     "tslint": "^3.13.0",
     "typescript": "^2.0.0"
+  },
+  "dependencies": {
+    "@types/lodash": "0.0.28",
+    "lodash": "^4.14.0"
   }
 }
