@@ -10,7 +10,7 @@ export function lazy<T>(f: () => T): () => T {
     };
 }
 
-export class CacheMap<T> {
+export class Map<T> {
 
     readonly _map: { [id: string]: T } = {};
 
@@ -374,7 +374,7 @@ export namespace dag {
 
     export class Dag {
 
-        private readonly _map = new CacheMap<any>();
+        private readonly _map = new Map<any>();
 
         get<T>(bag: bag.Bag<T>): optimized.Bag<T> {
             const id = bag.id;
@@ -415,7 +415,7 @@ export namespace syncmem {
 
     export class SyncMem {
 
-        private readonly _map = new CacheMap<GetArray<any>>();
+        private readonly _map = new Map<GetArray<any>>();
 
         private readonly _dag: dag.Dag = new dag.Dag();
 
