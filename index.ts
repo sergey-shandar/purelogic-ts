@@ -26,6 +26,10 @@ export class CacheMap<T> {
         }
         return result;
     }
+
+    optionalGet(id: string): T|undefined {
+        return this._map[id];
+    }
 }
 
 /**
@@ -425,10 +429,7 @@ export namespace syncmem {
 
         private _get<T>(o: optimized.Bag<T>): GetArray<T> {
             const id = o.id;
-            const result = this._map._map[id];
-            if (result !== undefined) {
-                return result;
-            }
+            return this._map.get(id, () => {
                 const links = o.array
                     .map(link => link.implementation(<I>(value: optimized.LinkValue<T, I>) => {
                         // NOTE: possible optimization:
@@ -439,24 +440,19 @@ export namespace syncmem {
                     }));
                 // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
                 const refLinks = array.ref(links);
-            const newResult = () => refLinks.flatMap(f => f());
-
-            this._map._map[id] = newResult;
-            return newResult;
+                return () => refLinks.flatMap(f => f());
+            });
         }
 
         private _fromNode<T>(n: optimized.Node<T>): GetArray<T> {
             const id = n.id;
             const map = this._map;
-            const result = map._map[id];
-            if (result !== undefined) {
-                return result;
-            }
+            return map.get(id, () => {
                 const get = <I>(b: optimized.Bag<I>) => this._get(b);
 
                 class Visitor implements optimized.NodeVisitor<T, GetArray<T>> {
 
-                    input(): GetArray<T> { return () => map._map[id](); }
+                    input(): GetArray<T> { return () => (<GetArray<T>> map.optionalGet(id))(); }
 
                     one(value: T): GetArray<T> { return () => [value]; }
 
@@ -491,9 +487,8 @@ export namespace syncmem {
                         });
                     }
                 }
-            const newResult = n.implementation(new Visitor());
-            map._map[id] = newResult;
-            return newResult;
+                return n.implementation(new Visitor());
+            });
         }
     }
 }
