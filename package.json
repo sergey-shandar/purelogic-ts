@@ -1,6 +1,6 @@
 {
   "name": "purelogic-ts",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "PureLogic for TypeScript",
   "main": "index.js",
   "scripts": {
@@ -33,5 +33,9 @@
     "mocha": "^2.5.3",
     "tslint": "^3.13.0",
     "typescript": "^2.0.0"
+  },
+  "dependencies": {
+    "@types/lodash": "0.0.28",
+    "lodash": "^4.14.0"
   }
 }
