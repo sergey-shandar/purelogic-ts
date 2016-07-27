@@ -492,3 +492,85 @@ export namespace syncmem {
         }
     }
 }
+
+export namespace asyncmem {
+
+    export type GetArray<T> = Promise<T[]>;
+
+    export class AsyncMem {
+
+        private readonly _map = new Map<GetArray<any>>();
+
+        private readonly _dag: dag.Dag = new dag.Dag();
+
+        set<T>(input: bag.Bag<T>, getArray: GetArray<T>): void {
+           this._map.set(input.id, getArray);
+        }
+
+        get<T>(b: bag.Bag<T>): GetArray<T> {
+            return this._get(this._dag.get(b));
+        }
+
+        private _get<T>(o: optimized.Bag<T>): GetArray<T> {
+            const id = o.id;
+            return this._map.get(id, () => {
+                const links = o.array
+                    .map(link => link.implementation(<I>(value: optimized.LinkValue<T, I>) => {
+                        // NOTE: possible optimization:
+                        // if (f === flatMap.identity) { return nodeFunc; }
+                        const f = value.func;
+                        return this._fromNode(value.node).then(x => array.ref(x).flatMap(f));
+                    }));
+                // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
+                return Promise.all(links).then(x => array.ref(x).flatMap(x => x));
+            });
+        }
+
+        private _fromNode<T>(n: optimized.Node<T>): GetArray<T> {
+            const id = n.id;
+            const map = this._map;
+            return map.get(id, () => {
+                const get = <I>(b: optimized.Bag<I>) => this._get(b);
+
+                class Visitor implements optimized.NodeVisitor<T, GetArray<T>> {
+
+                    input(): GetArray<T> { return <GetArray<T>> map.optionalGet(id); }
+
+                    one(value: T): GetArray<T> { return Promise.resolve(value); }
+
+                    groupBy(
+                        input: optimized.Bag<T>,
+                        toKey: bag.KeyFunc<T>,
+                        reduce: bag.ReduceFunc<T>):
+
+                        GetArray<T> {
+
+                        const inputLazyArray = get(input);
+                        return inputLazyArray.then(x => {
+                            const map: { [id: string]: T; } = {};
+                            x.forEach(value => {
+                                const key = toKey(value);
+                                const current = map[key];
+                                map[key] = current !== undefined ? reduce(current, value) : value;
+                            });
+                            return Object.keys(map).map(k => map[k]);
+                        });
+                    }
+
+                    product<A, B>(
+                        a: optimized.Bag<A>, b: optimized.Bag<B>, func: bag.ProductFunc<A, B, T>
+                    ): GetArray<T> {
+                        const getA = get(a);
+                        const getB = get(b);
+                        return Promise.all([getA, getB]).then(x => {
+                            const aArray = array.ref(x[0]);
+                            const bArray = array.ref(x[1]);
+                            return aArray.flatMap(av => bArray.flatMap(bv => func(av, bv)));
+                        });
+                    }
+                }
+                return n.implementation(new Visitor());
+            });
+        }
+    }
+}
