@@ -421,7 +421,10 @@ export namespace syncmem {
 
         private _get<T>(o: optimized.Bag<T>): GetArray<T> {
             const id = o.id;
-            // make sure we add all children.
+            const result = this._map[id];
+            if (result !== undefined) {
+                return result;
+            }
             const links = o.array
                 .map(link => link.implementation(<I>(value: optimized.LinkValue<T, I>) => {
                     // NOTE: possible optimization:
@@ -430,10 +433,6 @@ export namespace syncmem {
                     const nodeFunc = this._fromNode(value.node);
                     return () => array.ref(nodeFunc()).flatMap(f);
                 }));
-            const result = this._map[id];
-            if (result !== undefined) {
-                return result;
-            }
             // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
             const refLinks = array.ref(links);
             const newResult = () => refLinks.flatMap(f => f());
