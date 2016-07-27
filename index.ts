@@ -1,3 +1,5 @@
+import * as lodash from "lodash";
+
 export function lazy<T>(f: () => T): () => T {
     let called = false;
     let result: T;
@@ -46,22 +48,8 @@ export namespace flatMap {
  */
 export namespace array {
 
-    export class Ref<T> {
-
-        constructor(public readonly array: T[]) {}
-
-        flatMap<O>(f: flatMap.Func<T, O>): O[] {
-            const result: O[] = [];
-            return result.concat(...this.array.map(f));
-        }
-
-        spliceOne(i: number): T {
-            return this.array.splice(i, 1)[0];
-        }
-    }
-
-    export function ref<T>(array: T[]): Ref<T> {
-        return new Ref(array);
+    export function spliceOne<T>(array: T[], i: number): T {
+        return array.splice(i, 1)[0];
     }
 }
 
@@ -301,7 +289,7 @@ export namespace optimized {
             function visitor<I>(x: LinkValue<T, I>): Link<O> {
                 const f = x.func;
                 const newFunc = f !== flatMap.identity
-                    ? (value: I) => array.ref(f(value)).flatMap(func)
+                    ? (value: I) => lodash.flatMap(f(value), func)
                     : <flatMap.Func<I, O>> <any> func;
                 return x.node.link(newFunc);
             }
@@ -349,9 +337,8 @@ export namespace optimized {
                     const i = aLinks.findIndex(aLink => aLink.nodeId() === x.node.id);
                     function getFunc<I>(): flatMap.Func<I, T> { return <any> x.func; }
                     bLinks.push(i !== -1
-                        ? array.ref(aLinks).spliceOne(i).addFunc(getFunc)
-                        : bLink
-                    );
+                        ? array.spliceOne(aLinks, i).addFunc(getFunc)
+                        : bLink);
                 }
                 bLink.implementation(bVisitor);
             });
@@ -437,11 +424,10 @@ export namespace syncmem {
                         // if (f === flatMap.identity) { return nodeFunc; }
                         const f = value.func;
                         const nodeFunc = this._fromNode(value.node);
-                        return () => array.ref(nodeFunc()).flatMap(f);
+                        return () => lodash.flatMap(nodeFunc(), f);
                     }));
                 // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
-                const refLinks = array.ref(links);
-                return () => refLinks.flatMap(f => f());
+                return () => lodash.flatMap(links, f => f());
             });
         }
 
@@ -482,9 +468,10 @@ export namespace syncmem {
                         const getA = get(a);
                         const getB = get(b);
                         return lazy(() => {
-                            const aArray = array.ref(getA());
-                            const bArray = array.ref(getB());
-                            return aArray.flatMap(av => bArray.flatMap(bv => func(av, bv)));
+                            const aArray = getA();
+                            const bArray = getB();
+                            return lodash.flatMap(
+                                aArray, av => lodash.flatMap(bArray, bv => func(av, bv)));
                         });
                     }
                 }
