@@ -1,6 +1,6 @@
 {
   "name": "purelogic-ts",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "PureLogic for TypeScript",
   "main": "index.js",
   "scripts": {
