@@ -207,8 +207,7 @@ export namespace bag {
             keyB: KeyFunc<B>,
             reduceT: ReduceFunc<T>,
             reduceB: ReduceFunc<B>):
-
-            Bag<Join<T, B>> {
+                Bag<Join<T, B>> {
 
             function join(k: string, t: T|undefined, b: B|undefined) {
                 return new Join(k, t, b);
@@ -447,8 +446,7 @@ export namespace syncmem {
                         input: optimized.Bag<T>,
                         toKey: bag.KeyFunc<T>,
                         reduce: bag.ReduceFunc<T>):
-
-                        GetArray<T> {
+                            GetArray<T> {
 
                         const inputLazyArray = get(input);
                         return lazy(() => {
@@ -507,10 +505,10 @@ export namespace asyncmem {
                         // NOTE: possible optimization:
                         // if (f === flatMap.identity) { return nodeFunc; }
                         const f = value.func;
-                        return this._fromNode(value.node).then(x => array.ref(x).flatMap(f));
+                        return this._fromNode(value.node).then(x => lodash.flatMap(x, f));
                     }));
                 // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
-                return Promise.all(links).then(x => array.ref(x).flatMap(x => x));
+                return Promise.all(links).then(lodash.flatten);
             });
         }
 
@@ -530,8 +528,7 @@ export namespace asyncmem {
                         input: optimized.Bag<T>,
                         toKey: bag.KeyFunc<T>,
                         reduce: bag.ReduceFunc<T>):
-
-                        GetArray<T> {
+                            GetArray<T> {
 
                         const inputLazyArray = get(input);
                         return inputLazyArray.then(x => {
@@ -546,14 +543,18 @@ export namespace asyncmem {
                     }
 
                     product<A, B>(
-                        a: optimized.Bag<A>, b: optimized.Bag<B>, func: bag.ProductFunc<A, B, T>
-                    ): GetArray<T> {
+                        a: optimized.Bag<A>,
+                        b: optimized.Bag<B>,
+                        func: bag.ProductFunc<A, B, T>):
+                            GetArray<T> {
+
                         const getA = get(a);
                         const getB = get(b);
                         return Promise.all([getA, getB]).then(x => {
-                            const aArray = array.ref(x[0]);
-                            const bArray = array.ref(x[1]);
-                            return aArray.flatMap(av => bArray.flatMap(bv => func(av, bv)));
+                            const aArray = x[0];
+                            const bArray = x[1];
+                            return lodash.flatMap(
+                                aArray, av => lodash.flatMap(bArray, bv => func(av, bv)));
                         });
                     }
                 }
