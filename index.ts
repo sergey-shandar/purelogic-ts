@@ -10,6 +10,28 @@ export function lazy<T>(f: () => T): () => T {
     };
 }
 
+export class Map<T> {
+
+    readonly _map: { [id: string]: T } = {};
+
+    set(id: string, value: T): void {
+        this._map[id] = value;
+    }
+
+    get(id: string, create: () => T): T {
+        let result = this._map[id];
+        if (result === undefined) {
+            result = create();
+            this._map[id] = result;
+        }
+        return result;
+    }
+
+    optionalGet(id: string): T|undefined {
+        return this._map[id];
+    }
+}
+
 /**
  * Flat Map functions.
  */
@@ -352,38 +374,34 @@ export namespace dag {
 
     export class Dag {
 
-        private readonly _map: { [id: string]: any } = {};
+        private readonly _map = new Map<any>();
 
         get<T>(bag: bag.Bag<T>): optimized.Bag<T> {
             const id = bag.id;
-            const cached = this._map[id];
-            if (cached !== undefined) {
-                return cached;
-            }
-            const getOpimized = <I>(b: bag.Bag<I>) => this.get(b);
-            class Visitor implements bag.Visitor<T, optimized.Bag<T>> {
-                flatMap<I>(value: bag.FlatMap<T, I>): optimized.Bag<T> {
-                    return getOpimized(value.input).flatMap(id, value.func);
+            return this._map.get(id, () => {
+                const getOpimized = <I>(b: bag.Bag<I>) => this.get(b);
+                class Visitor implements bag.Visitor<T, optimized.Bag<T>> {
+                    flatMap<I>(value: bag.FlatMap<T, I>): optimized.Bag<T> {
+                        return getOpimized(value.input).flatMap(id, value.func);
+                    }
+                    disjointUnion(value: bag.DisjointUnion<T>): optimized.Bag<T> {
+                        return getOpimized(value.a).disjointUnion(id, getOpimized(value.b));
+                    }
+                    one(value: T): optimized.Bag<T> {
+                        return optimized.one(id, value);
+                    }
+                    input(): optimized.Bag<T> {
+                        return optimized.input<T>(id);
+                    }
+                    groupBy(value: bag.GroupBy<T>): optimized.Bag<T> {
+                        return getOpimized(value.input).groupBy(id, value.toKey, value.reduce);
+                    }
+                    product<A, B>(value: bag.Product<T, A, B>): optimized.Bag<T> {
+                        return getOpimized(value.a).product(id, getOpimized(value.b), value.func);
+                    }
                 }
-                disjointUnion(value: bag.DisjointUnion<T>): optimized.Bag<T> {
-                    return getOpimized(value.a).disjointUnion(id, getOpimized(value.b));
-                }
-                one(value: T): optimized.Bag<T> {
-                    return optimized.one(id, value);
-                }
-                input(): optimized.Bag<T> {
-                    return optimized.input<T>(id);
-                }
-                groupBy(value: bag.GroupBy<T>): optimized.Bag<T> {
-                    return getOpimized(value.input).groupBy(id, value.toKey, value.reduce);
-                }
-                product<A, B>(value: bag.Product<T, A, B>): optimized.Bag<T> {
-                    return getOpimized(value.a).product(id, getOpimized(value.b), value.func);
-                }
-            }
-            const result = bag.implementation(new Visitor());
-            this._map[id] = result;
-            return result;
+                return bag.implementation(new Visitor());
+            });
         }
     }
 }
@@ -397,12 +415,12 @@ export namespace syncmem {
 
     export class SyncMem {
 
-        private readonly _map: { [id: string]: GetArray<any> } = {};
+        private readonly _map = new Map<GetArray<any>>();
 
         private readonly _dag: dag.Dag = new dag.Dag();
 
         set<T>(input: bag.Bag<T>, getArray: GetArray<T>): void {
-            this._map[input.id] = getArray;
+           this._map.set(input.id, getArray);
         }
 
         get<T>(b: bag.Bag<T>): GetArray<T> {
@@ -411,74 +429,66 @@ export namespace syncmem {
 
         private _get<T>(o: optimized.Bag<T>): GetArray<T> {
             const id = o.id;
-            const links = o.array
-                .map(link => link.implementation(<I>(value: optimized.LinkValue<T, I>) => {
-                    // NOTE: possible optimization:
-                    // if (f === flatMap.identity) { return nodeFunc; }
-                    const f = value.func;
-                    const nodeFunc = this._fromNode(value.node);
-                    return () => array.ref(nodeFunc()).flatMap(f);
-                }));
-            const result = this._map[id];
-            if (result !== undefined) {
-                return result;
-            }
-
-            // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
-            const refLinks = array.ref(links);
-            const newResult = () => refLinks.flatMap(f => f());
-
-            this._map[id] = newResult;
-            return newResult;
+            return this._map.get(id, () => {
+                const links = o.array
+                    .map(link => link.implementation(<I>(value: optimized.LinkValue<T, I>) => {
+                        // NOTE: possible optimization:
+                        // if (f === flatMap.identity) { return nodeFunc; }
+                        const f = value.func;
+                        const nodeFunc = this._fromNode(value.node);
+                        return () => array.ref(nodeFunc()).flatMap(f);
+                    }));
+                // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
+                const refLinks = array.ref(links);
+                return () => refLinks.flatMap(f => f());
+            });
         }
 
         private _fromNode<T>(n: optimized.Node<T>): GetArray<T> {
             const id = n.id;
             const map = this._map;
-            const result = map[id];
-            if (result !== undefined) {
-                return result;
-            }
-            const get = <I>(b: optimized.Bag<I>) => this._get(b);
-            class Visitor implements optimized.NodeVisitor<T, GetArray<T>> {
+            return map.get(id, () => {
+                const get = <I>(b: optimized.Bag<I>) => this._get(b);
 
-                input(): GetArray<T> { return () => map[id](); }
+                class Visitor implements optimized.NodeVisitor<T, GetArray<T>> {
 
-                one(value: T): GetArray<T> { return () => [value]; }
+                    input(): GetArray<T> { return () => (<GetArray<T>> map.optionalGet(id))(); }
 
-                groupBy(
-                    input: optimized.Bag<T>, toKey: bag.KeyFunc<T>, reduce: bag.ReduceFunc<T>
-                ): GetArray<T> {
-                    const inputLazyArray = get(input);
-                    return lazy(() => {
-                        const map: { [id: string]: T; } = {};
-                        inputLazyArray().forEach(value => {
-                            const key = toKey(value);
-                            const current = map[key];
-                            map[key] = current !== undefined ? reduce(current, value) : value;
+                    one(value: T): GetArray<T> { return () => [value]; }
+
+                    groupBy(
+                        input: optimized.Bag<T>,
+                        toKey: bag.KeyFunc<T>,
+                        reduce: bag.ReduceFunc<T>):
+
+                        GetArray<T> {
+
+                        const inputLazyArray = get(input);
+                        return lazy(() => {
+                            const map: { [id: string]: T; } = {};
+                            inputLazyArray().forEach(value => {
+                                const key = toKey(value);
+                                const current = map[key];
+                                map[key] = current !== undefined ? reduce(current, value) : value;
+                            });
+                            return Object.keys(map).map(k => map[k]);
                         });
-                        return Object.keys(map).map(k => map[k]);
-                    });
-                }
+                    }
 
-                product<A, B>(
-                    a: optimized.Bag<A>, b: optimized.Bag<B>, func: bag.ProductFunc<A, B, T>
-                ): GetArray<T> {
-                    const getA = get(a);
-                    const getB = get(b);
-                    return lazy(() => {
-                        const aArray = array.ref(getA());
-                        const bArray = array.ref(getB());
-                        return aArray.flatMap(av => bArray.flatMap(bv => func(av, bv)));
-                    });
+                    product<A, B>(
+                        a: optimized.Bag<A>, b: optimized.Bag<B>, func: bag.ProductFunc<A, B, T>
+                    ): GetArray<T> {
+                        const getA = get(a);
+                        const getB = get(b);
+                        return lazy(() => {
+                            const aArray = array.ref(getA());
+                            const bArray = array.ref(getB());
+                            return aArray.flatMap(av => bArray.flatMap(bv => func(av, bv)));
+                        });
+                    }
                 }
-            }
-            const newResult = n.implementation(new Visitor());
-            map[id] = newResult;
-            return newResult;
+                return n.implementation(new Visitor());
+            });
         }
     }
-}
-
-export namespace asyncmem {
 }
