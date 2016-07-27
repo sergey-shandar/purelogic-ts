@@ -12,19 +12,20 @@ export function lazy<T>(f: () => T): () => T {
 
 export class Map<T> {
 
-    readonly _map: { [id: string]: T } = {};
+    private readonly _map: { [id: string]: T } = {};
 
     set(id: string, value: T): void {
         this._map[id] = value;
     }
 
-    get(id: string, create: () => T): T {
-        let result = this._map[id];
+    get<X extends T>(id: string, create: () => X): X {
+        const result = this._map[id];
         if (result === undefined) {
-            result = create();
-            this._map[id] = result;
+            const newResult = create();
+            this._map[id] = newResult;
+            return newResult;
         }
-        return result;
+        return <X> result;
     }
 
     optionalGet(id: string): T|undefined {
