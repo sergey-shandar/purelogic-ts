@@ -65,6 +65,14 @@ export namespace iterable {
         [Symbol.iterator]() { return this.factory()[Symbol.iterator](); }
     }
 
+    export function factory<T>(f: () => Iterable<T>): Factory<T> {
+        return new Factory(f);
+    }
+
+    export function fromArray<T>(v: T[]): Factory<T> {
+        return new Factory(() => v);
+    }
+
     export function *flatMap<T, R>(c: Iterable<T>, f: (v: T) => Iterable<R>): Iterable<R> {
         for (const cv of c) {
             const r = f(cv);

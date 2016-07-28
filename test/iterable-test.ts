@@ -15,7 +15,10 @@ describe("namespace iterable", function () {
         iterableEqual(iterable.concat(i, i), [1, 3]);
         iterableEqual(iterable.concat(x(), x()), [1, 3, 1, 3]);
         iterableEqual(
-            iterable.concat(new iterable.Factory(x), new iterable.Factory(x)), [1, 3, 1, 3]);
+            iterable.concat(iterable.factory(x), iterable.factory(x)), [1, 3, 1, 3]);
+        const m = [9, 7];
+        iterableEqual(
+            iterable.concat(iterable.fromArray(m), iterable.fromArray(m)), [9, 7, 9, 7]);
     });
     it("flatMap()", () => {
         function *x() { yield 1; yield 4; }
