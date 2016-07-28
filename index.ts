@@ -438,6 +438,9 @@ export namespace syncmem {
 
                 class Visitor implements optimized.NodeVisitor<T, GetArray<T>> {
 
+                    /**
+                     * when input is not defined yet.
+                     */
                     input(): GetArray<T> { return () => (<GetArray<T>> map.optionalGet(id))(); }
 
                     one(value: T): GetArray<T> { return () => [value]; }
@@ -483,6 +486,14 @@ export namespace asyncmem {
 
     export type GetArray<T> = Promise<T[]>;
 
+    export class InputError implements Error {
+        readonly name: string = "InputError";
+        readonly message: string;
+        constructor(public readonly bagId: string) {
+            this.message = `InputError: input bag ${bagId} is not defined`;
+        }
+    }
+
     export class AsyncMem {
 
         private readonly _map = new Map<GetArray<any>>();
@@ -520,9 +531,9 @@ export namespace asyncmem {
 
                 class Visitor implements optimized.NodeVisitor<T, GetArray<T>> {
 
-                    input(): GetArray<T> { return <GetArray<T>> map.optionalGet(id); }
+                    input(): GetArray<T> { throw new InputError(id); }
 
-                    one(value: T): GetArray<T> { return Promise.resolve(value); }
+                    one(value: T): GetArray<T> { return Promise.resolve([value]); }
 
                     groupBy(
                         input: optimized.Bag<T>,
