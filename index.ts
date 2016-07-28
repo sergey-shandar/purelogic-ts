@@ -54,6 +54,45 @@ export namespace array {
 }
 
 /**
+ * Iterable utilities.
+ */
+export namespace iterable {
+
+    export class Factory<T> implements Iterable<T> {
+
+        constructor(public readonly factory: () => Iterable<T>) {}
+
+        [Symbol.iterator]() { return this.factory()[Symbol.iterator](); }
+    }
+
+    export function factory<T>(f: () => Iterable<T>): Factory<T> {
+        return new Factory(f);
+    }
+
+    export function fromArray<T>(v: T[]): Factory<T> {
+        return new Factory(() => v);
+    }
+
+    export function *flatMap<T, R>(c: Iterable<T>, f: (v: T) => Iterable<R>): Iterable<R> {
+        for (const cv of c) {
+            const r = f(cv);
+            for (const rv of r) {
+                yield rv;
+            }
+        }
+    }
+
+    export function *concat<T>(a: Iterable<T>, b: Iterable<T>): Iterable<T> {
+        for (const av of a) { yield av; }
+        for (const bv of b) { yield bv; }
+    }
+
+    export function flatten<T>(c: Iterable<Iterable<T>>): Iterable<T> {
+        return flatMap(c, v => v);
+    }
+}
+
+/**
  * Bag type and related functions.
  */
 export namespace bag {
