@@ -323,7 +323,7 @@ export namespace optimized {
             function visitor<I>(x: LinkValue<T, I>): Link<O> {
                 const f = x.func;
                 const newFunc = f !== flatMap.identity
-                    ? (value: I) => lodash.flatMap(f(value), func)
+                    ? (value: I) => Array.from(iterable.flatMap(f(value), func))
                     : <flatMap.Func<I, O>> <any> func;
                 return x.node.link(newFunc);
             }
@@ -464,10 +464,10 @@ export namespace syncmem {
                         // if (f === flatMap.identity) { return nodeFunc; }
                         const f = value.func;
                         const nodeFunc = this._fromNode(value.node);
-                        return () => lodash.flatMap(Array.from(nodeFunc), f);
+                        return iterable.factory(() => iterable.flatMap(nodeFunc, f));
                     }));
                 // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
-                return iterable.fromArray(lodash.flatMap(links, f => f()));
+                return iterable.factory(() => iterable.flatten(links));
             });
         }
 
