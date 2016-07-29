@@ -579,7 +579,7 @@ export namespace asyncmem {
                         return this._fromNode(value.node).then(x => Array.from(iterable.immutable(x).flatMap(f)));
                     }));
                 // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
-                return Promise.all(linkPromises).then(lodash.flatten);
+                return Promise.all(linkPromises).then(x => Array.from(iterable.flatten(x)));
             });
         }
 
