@@ -1,12 +1,9 @@
 import "mocha";
 import { iterable } from "../index";
 import * as chai from "chai";
+import { iterableEqual } from "./iterable-helper";
 
 chai.should();
-
-function iterableEqual<T>(a: Iterable<T>, b: Iterable<T>) {
-    Array.from(a).should.deep.equal(Array.from(b));
-}
 
 describe("namespace iterable", function () {
     it("concat()", () => {
