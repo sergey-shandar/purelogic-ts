@@ -11,7 +11,7 @@ describe("namespace syncmem", function() {
             const input = bag.input<number>();
             const f = [123];
             syncMem.set(input, f);
-            syncMem.get(input).should.equal(f);
+            iterableEqual(syncMem.get(input), [123]);
             iterableEqual(syncMem.get(input.disjointUnion(bag.one(5))), [123, 5]);
             iterableEqual(
                 syncMem.get(input.product(bag.one([1, 2, 3]).flatMap(x => x), (a, b) => [a * b])),

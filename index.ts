@@ -32,24 +32,6 @@ export class Map<T> {
 }
 
 /**
- * Flat Map functions.
- */
-export namespace flatMap {
-    export type Func<I, O> = (value: I) => O[];
-    export function identity<T>(value: T): T[] { return [value]; }
-}
-
-/**
- * Array utilities.
- */
-export namespace array {
-
-    export function spliceOne<T>(array: T[], i: number): T {
-        return array.splice(i, 1)[0];
-    }
-}
-
-/**
  * Iterable utilities.
  */
 export namespace iterable {
@@ -108,6 +90,32 @@ export namespace iterable {
 
     export function flatten<T>(c: I<I<T>>): Immutable<T> {
         return flatMap(c, v => v);
+    }
+}
+
+/**
+ * Flat Map functions.
+ */
+export namespace flatMap {
+    /*
+    export type Func<I, O> = (value: I) => iterable.I<O>;
+    export function identity<T>(value: T): iterable.Immutable<T> {
+        return iterable.immutable([value]);
+    }
+    */
+    export type Func<I, O> = (value: I) => O[];
+    export function identity<T>(value: T): T[] {
+        return [value];
+    }
+}
+
+/**
+ * Array utilities.
+ */
+export namespace array {
+
+    export function spliceOne<T>(array: T[], i: number): T {
+        return array.splice(i, 1)[0];
     }
 }
 
