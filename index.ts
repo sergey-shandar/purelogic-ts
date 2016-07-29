@@ -99,15 +99,9 @@ export namespace iterable {
  * Flat Map functions.
  */
 export namespace flatMap {
-    /*
     export type Func<I, O> = (value: I) => iterable.I<O>;
     export function identity<T>(value: T): iterable.Immutable<T> {
         return iterable.immutable([value]);
-    }
-    */
-    export type Func<I, O> = (value: I) => O[];
-    export function identity<T>(value: T): T[] {
-        return [value];
     }
 }
 
@@ -367,7 +361,7 @@ export namespace optimized {
             function visitor<I>(link: LinkValue<T, I>): Link<T> {
                 const f = link.func;
                 const fNew = getFunc<I>();
-                return link.node.link(i => f(i).concat(fNew(i)));
+                return link.node.link(i => iterable.immutable(f(i)).concat(fNew(i)));
             }
             return this.implementation(visitor);
         }
