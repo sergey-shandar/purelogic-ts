@@ -556,14 +556,6 @@ export namespace asyncmem {
 
     export type GetArray<T> = Promise<T[]>;
 
-    export class InputError implements Error {
-        readonly name: string = "InputError";
-        readonly message: string;
-        constructor(public readonly bagId: string) {
-            this.message = `InputError: input bag ${bagId} is not defined`;
-        }
-    }
-
     export class AsyncMem {
 
         private readonly _map = new Map<GetArray<any>>();
@@ -601,7 +593,7 @@ export namespace asyncmem {
 
                 class Visitor implements optimized.NodeVisitor<T, GetArray<T>> {
 
-                    input(): GetArray<T> { throw new InputError(id); }
+                    input(): GetArray<T> { throw new syncmem.InputError(id); }
 
                     one(value: T): GetArray<T> { return Promise.resolve([value]); }
 
