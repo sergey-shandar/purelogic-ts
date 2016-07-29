@@ -576,7 +576,7 @@ export namespace asyncmem {
                         // NOTE: possible optimization:
                         // if (f === flatMap.identity) { return nodeFunc; }
                         const f = value.func;
-                        return this._fromNode(value.node).then(x => lodash.flatMap(x, f));
+                        return this._fromNode(value.node).then(x => Array.from(iterable.immutable(x).flatMap(f)));
                     }));
                 // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
                 return Promise.all(linkPromises).then(lodash.flatten);
