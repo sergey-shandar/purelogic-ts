@@ -1,4 +1,4 @@
-import { bag, syncmem, iterable } from "../index";
+import { bag, syncmem } from "../index";
 import * as chai from "chai";
 import { iterableEqual } from "./iterable-helper";
 
@@ -9,7 +9,7 @@ describe("namespace syncmem", function() {
         it("set()", () => {
             const syncMem = new syncmem.SyncMem();
             const input = bag.input<number>();
-            const f = iterable.fromArray([123]);
+            const f = [123];
             syncMem.set(input, f);
             syncMem.get(input).should.equal(f);
             iterableEqual(syncMem.get(input.disjointUnion(bag.one(5))), [123, 5]);
@@ -31,7 +31,7 @@ describe("namespace syncmem", function() {
                 syncMem.get(r.flatMap(x => [x, x]).reduce((a, b) => a + b)),
                 ["Hello world!Hello world!"]);
             const input = bag.input<string>();
-            syncMem.set(input, iterable.fromArray(["abc", "def"]));
+            syncMem.set(input, ["abc", "def"]);
             const x = syncMem.get(input);
             iterableEqual(x, ["abc", "def"]);
             iterableEqual(
