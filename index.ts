@@ -41,6 +41,28 @@ export namespace iterable {
         constructor(public readonly getIterator: () => Iterator<T>) {}
 
         [Symbol.iterator]() { return this.getIterator(); }
+
+        flatMap<R>(f: (v: T) => I<R>): Immutable<R> {
+            const a = this;
+            function *result() {
+                for (const cv of a) {
+                    const r = f(cv);
+                    for (const rv of immutable(r)) {
+                        yield rv;
+                    }
+                }
+            }
+            return immutable(result);
+        }
+
+        concat<T>(b: I<T>): Immutable<T> {
+            const a = this;
+            function *result() {
+                for (const av of a) { yield av; }
+                for (const bv of immutable(b)) { yield bv; }
+            }
+            return immutable(result);
+        }
     }
 
     export type I<T> = Immutable<T> | (() => Iterator<T>|T[]) | T[];
@@ -68,28 +90,8 @@ export namespace iterable {
         }
     }
 
-    export function flatMap<T, R>(c: I<T>, f: (v: T) => I<R>): Immutable<R> {
-        function *result() {
-            for (const cv of immutable(c)) {
-                const r = f(cv);
-                for (const rv of immutable(r)) {
-                    yield rv;
-                }
-            }
-        }
-        return immutable(result);
-    }
-
-    export function concat<T>(a: I<T>, b: I<T>): Immutable<T> {
-        function *result() {
-            for (const av of immutable(a)) { yield av; }
-            for (const bv of immutable(b)) { yield bv; }
-        }
-        return immutable(result);
-    }
-
     export function flatten<T>(c: I<I<T>>): Immutable<T> {
-        return flatMap(c, v => v);
+        return immutable<I<T>>(c).flatMap(v => v);
     }
 }
 
@@ -354,7 +356,7 @@ export namespace optimized {
             function visitor<I>(x: LinkValue<T, I>): Link<O> {
                 const f = x.func;
                 const newFunc = f !== flatMap.identity
-                    ? (value: I) => Array.from(iterable.flatMap(f(value), func))
+                    ? (value: I) => Array.from(iterable.immutable(f(value)).flatMap(func))
                     : <flatMap.Func<I, O>> <any> func;
                 return x.node.link(newFunc);
             }
@@ -495,7 +497,7 @@ export namespace syncmem {
                         // if (f === flatMap.identity) { return nodeFunc; }
                         const f = value.func;
                         const nodeFunc = this._fromNode(value.node);
-                        return iterable.flatMap(nodeFunc, f);
+                        return nodeFunc.flatMap(f);
                     }));
                 // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
                 return iterable.flatten(links);
