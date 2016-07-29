@@ -35,8 +35,6 @@
     "typescript": "^2.0.0"
   },
   "dependencies": {
-    "@types/lodash": "0.0.28",
-    "lodash": "^4.14.0",
     "ts-helpers": "^1.1.1"
   }
 }
