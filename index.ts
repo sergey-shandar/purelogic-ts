@@ -541,10 +541,9 @@ export namespace syncmem {
                     product<A, B>(
                         a: optimized.Bag<A>, b: optimized.Bag<B>, func: bag.ProductFunc<A, B, T>
                     ): iterable.Immutable<T> {
-                        const getA = Array.from(get(a));
-                        const getB = Array.from(get(b));
-                        return iterable.immutable(lazy(() => lodash.flatMap(
-                                getA, av => lodash.flatMap(getB, bv => func(av, bv)))));
+                        const getA = get(a);
+                        const getB = get(b);
+                        return getA.flatMap(av => getB.flatMap(bv => func(av, bv)));
                     }
                 }
                 return n.implementation(new Visitor());
