@@ -32,11 +32,81 @@ export class Map<T> {
 }
 
 /**
+ * Iterable utilities.
+ */
+export namespace iterable {
+
+    export class Immutable<T> implements Iterable<T> {
+
+        constructor(public readonly getIterator: () => Iterator<T>) {}
+
+        [Symbol.iterator]() { return this.getIterator(); }
+    }
+
+    export type I<T> = Immutable<T> | (() => Iterator<T>|T[]) | T[];
+
+    function arrayIterator<T>(array: T[]): Iterator<T> {
+        return array[Symbol.iterator]();
+    }
+
+    export function immutable<T>(i: I<T>): Immutable<T> {
+        if (i instanceof Immutable) {
+            return i;
+        } else if (i instanceof Array) {
+            const a = i;
+            return new Immutable(() => arrayIterator(a));
+        } else {
+            const f = i;
+            return new Immutable(() => {
+                const r = f();
+                if (r instanceof Array) {
+                    return arrayIterator(r);
+                } else {
+                    return r;
+                }
+            });
+        }
+    }
+
+    export function flatMap<T, R>(c: I<T>, f: (v: T) => I<R>): Immutable<R> {
+        function *result() {
+            for (const cv of immutable(c)) {
+                const r = f(cv);
+                for (const rv of immutable(r)) {
+                    yield rv;
+                }
+            }
+        }
+        return immutable(result);
+    }
+
+    export function concat<T>(a: I<T>, b: I<T>): Immutable<T> {
+        function *result() {
+            for (const av of immutable(a)) { yield av; }
+            for (const bv of immutable(b)) { yield bv; }
+        }
+        return immutable(result);
+    }
+
+    export function flatten<T>(c: I<I<T>>): Immutable<T> {
+        return flatMap(c, v => v);
+    }
+}
+
+/**
  * Flat Map functions.
  */
 export namespace flatMap {
+    /*
+    export type Func<I, O> = (value: I) => iterable.I<O>;
+    export function identity<T>(value: T): iterable.Immutable<T> {
+        return iterable.immutable([value]);
+    }
+    */
     export type Func<I, O> = (value: I) => O[];
-    export function identity<T>(value: T): T[] { return [value]; }
+    export function identity<T>(value: T): T[] {
+        return [value];
+    }
 }
 
 /**
@@ -46,45 +116,6 @@ export namespace array {
 
     export function spliceOne<T>(array: T[], i: number): T {
         return array.splice(i, 1)[0];
-    }
-}
-
-/**
- * Iterable utilities.
- */
-export namespace iterable {
-
-    export class Factory<T> implements Iterable<T> {
-
-        constructor(public readonly factory: () => Iterable<T>) {}
-
-        [Symbol.iterator]() { return this.factory()[Symbol.iterator](); }
-    }
-
-    export function factory<T>(f: () => Iterable<T>): Factory<T> {
-        return new Factory(f);
-    }
-
-    export function fromArray<T>(v: T[]): Factory<T> {
-        return new Factory(() => v);
-    }
-
-    export function *flatMap<T, R>(c: Iterable<T>, f: (v: T) => Iterable<R>): Iterable<R> {
-        for (const cv of c) {
-            const r = f(cv);
-            for (const rv of r) {
-                yield rv;
-            }
-        }
-    }
-
-    export function *concat<T>(a: Iterable<T>, b: Iterable<T>): Iterable<T> {
-        for (const av of a) { yield av; }
-        for (const bv of b) { yield bv; }
-    }
-
-    export function flatten<T>(c: Iterable<Iterable<T>>): Iterable<T> {
-        return flatMap(c, v => v);
     }
 }
 
@@ -443,19 +474,19 @@ export namespace syncmem {
 
     export class SyncMem {
 
-        private readonly _map = new Map<iterable.Factory<any>>();
+        private readonly _map = new Map<iterable.Immutable<any>>();
 
         private readonly _dag: dag.Dag = new dag.Dag();
 
-        set<T>(input: bag.Bag<T>, factory: iterable.Factory<T>): void {
-           this._map.set(input.id, factory);
+        set<T>(input: bag.Bag<T>, factory: iterable.I<T>): void {
+           this._map.set(input.id, iterable.immutable(factory));
         }
 
-        get<T>(b: bag.Bag<T>): iterable.Factory<T> {
+        get<T>(b: bag.Bag<T>): iterable.Immutable<T> {
             return this._get(this._dag.get(b));
         }
 
-        private _get<T>(o: optimized.Bag<T>): iterable.Factory<T> {
+        private _get<T>(o: optimized.Bag<T>): iterable.Immutable<T> {
             const id = o.id;
             return this._map.get(id, () => {
                 const links = o.array
@@ -464,36 +495,36 @@ export namespace syncmem {
                         // if (f === flatMap.identity) { return nodeFunc; }
                         const f = value.func;
                         const nodeFunc = this._fromNode(value.node);
-                        return iterable.factory(() => iterable.flatMap(nodeFunc, f));
+                        return iterable.flatMap(nodeFunc, f);
                     }));
                 // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
-                return iterable.factory(() => iterable.flatten(links));
+                return iterable.flatten(links);
             });
         }
 
-        private _fromNode<T>(n: optimized.Node<T>): iterable.Factory<T> {
+        private _fromNode<T>(n: optimized.Node<T>): iterable.Immutable<T> {
             const id = n.id;
             const map = this._map;
             return map.get(id, () => {
                 const get = <I>(b: optimized.Bag<I>) => this._get(b);
 
-                class Visitor implements optimized.NodeVisitor<T, iterable.Factory<T>> {
+                class Visitor implements optimized.NodeVisitor<T, iterable.Immutable<T>> {
 
                     /**
                      * when input is not defined yet.
                      */
                     input(): never { throw new InputError(id); }
 
-                    one(value: T): iterable.Factory<T> { return iterable.fromArray([value]); }
+                    one(value: T): iterable.Immutable<T> { return iterable.immutable([value]); }
 
                     groupBy(
                         input: optimized.Bag<T>,
                         toKey: bag.KeyFunc<T>,
                         reduce: bag.ReduceFunc<T>):
-                            iterable.Factory<T> {
+                            iterable.Immutable<T> {
 
                         const inputLazyArray = get(input);
-                        return iterable.factory(lazy(() => {
+                        return iterable.immutable(lazy(() => {
                             const map: { [id: string]: T; } = {};
                             for (const value of inputLazyArray) {
                                 const key = toKey(value);
@@ -506,10 +537,10 @@ export namespace syncmem {
 
                     product<A, B>(
                         a: optimized.Bag<A>, b: optimized.Bag<B>, func: bag.ProductFunc<A, B, T>
-                    ): iterable.Factory<T> {
+                    ): iterable.Immutable<T> {
                         const getA = Array.from(get(a));
                         const getB = Array.from(get(b));
-                        return iterable.factory(lazy(() => lodash.flatMap(
+                        return iterable.immutable(lazy(() => lodash.flatMap(
                                 getA, av => lodash.flatMap(getB, bv => func(av, bv)))));
                     }
                 }
