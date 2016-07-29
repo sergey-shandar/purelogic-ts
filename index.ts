@@ -29,10 +29,6 @@ export class Map<T> {
         }
         return <X> result;
     }
-
-    optionalGet(id: string): T|undefined {
-        return this._map[id];
-    }
 }
 
 /**
@@ -437,23 +433,29 @@ export namespace dag {
  */
 export namespace syncmem {
 
-    export type GetArray<T> = () => T[];
+    export class InputError implements Error {
+        readonly name: string = "InputError";
+        readonly message: string;
+        constructor(public readonly bagId: string) {
+            this.message = `InputError: input bag ${bagId} is not defined`;
+        }
+    }
 
     export class SyncMem {
 
-        private readonly _map = new Map<GetArray<any>>();
+        private readonly _map = new Map<iterable.Factory<any>>();
 
         private readonly _dag: dag.Dag = new dag.Dag();
 
-        set<T>(input: bag.Bag<T>, getArray: GetArray<T>): void {
-           this._map.set(input.id, getArray);
+        set<T>(input: bag.Bag<T>, factory: iterable.Factory<T>): void {
+           this._map.set(input.id, factory);
         }
 
-        get<T>(b: bag.Bag<T>): GetArray<T> {
+        get<T>(b: bag.Bag<T>): iterable.Factory<T> {
             return this._get(this._dag.get(b));
         }
 
-        private _get<T>(o: optimized.Bag<T>): GetArray<T> {
+        private _get<T>(o: optimized.Bag<T>): iterable.Factory<T> {
             const id = o.id;
             return this._map.get(id, () => {
                 const links = o.array
@@ -462,57 +464,53 @@ export namespace syncmem {
                         // if (f === flatMap.identity) { return nodeFunc; }
                         const f = value.func;
                         const nodeFunc = this._fromNode(value.node);
-                        return () => lodash.flatMap(nodeFunc(), f);
+                        return () => lodash.flatMap(Array.from(nodeFunc), f);
                     }));
                 // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
-                return () => lodash.flatMap(links, f => f());
+                return iterable.fromArray(lodash.flatMap(links, f => f()));
             });
         }
 
-        private _fromNode<T>(n: optimized.Node<T>): GetArray<T> {
+        private _fromNode<T>(n: optimized.Node<T>): iterable.Factory<T> {
             const id = n.id;
             const map = this._map;
             return map.get(id, () => {
                 const get = <I>(b: optimized.Bag<I>) => this._get(b);
 
-                class Visitor implements optimized.NodeVisitor<T, GetArray<T>> {
+                class Visitor implements optimized.NodeVisitor<T, iterable.Factory<T>> {
 
                     /**
                      * when input is not defined yet.
                      */
-                    input(): GetArray<T> { return () => (<GetArray<T>> map.optionalGet(id))(); }
+                    input(): never { throw new InputError(id); }
 
-                    one(value: T): GetArray<T> { return () => [value]; }
+                    one(value: T): iterable.Factory<T> { return iterable.fromArray([value]); }
 
                     groupBy(
                         input: optimized.Bag<T>,
                         toKey: bag.KeyFunc<T>,
                         reduce: bag.ReduceFunc<T>):
-                            GetArray<T> {
+                            iterable.Factory<T> {
 
                         const inputLazyArray = get(input);
-                        return lazy(() => {
+                        return iterable.factory(lazy(() => {
                             const map: { [id: string]: T; } = {};
-                            inputLazyArray().forEach(value => {
+                            for (const value of inputLazyArray) {
                                 const key = toKey(value);
                                 const current = map[key];
                                 map[key] = current !== undefined ? reduce(current, value) : value;
-                            });
+                            };
                             return Object.keys(map).map(k => map[k]);
-                        });
+                        }));
                     }
 
                     product<A, B>(
                         a: optimized.Bag<A>, b: optimized.Bag<B>, func: bag.ProductFunc<A, B, T>
-                    ): GetArray<T> {
-                        const getA = get(a);
-                        const getB = get(b);
-                        return lazy(() => {
-                            const aArray = getA();
-                            const bArray = getB();
-                            return lodash.flatMap(
-                                aArray, av => lodash.flatMap(bArray, bv => func(av, bv)));
-                        });
+                    ): iterable.Factory<T> {
+                        const getA = Array.from(get(a));
+                        const getB = Array.from(get(b));
+                        return iterable.factory(lazy(() => lodash.flatMap(
+                                getA, av => lodash.flatMap(getB, bv => func(av, bv)))));
                     }
                 }
                 return n.implementation(new Visitor());
