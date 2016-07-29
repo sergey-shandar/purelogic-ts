@@ -1,4 +1,3 @@
-import * as lodash from "lodash";
 import "ts-helpers";
 
 export function lazy<T>(f: () => T): () => T {
@@ -621,8 +620,9 @@ export namespace asyncmem {
 
                         const getA = await get(a);
                         const getB = await get(b);
-                        return lodash.flatMap(
-                            getA, av => Array.from(iterable.immutable(getB).flatMap(bv => func(av, bv))));
+                        return Array.from(iterable.immutable(getA).flatMap(
+                            av => Array.from(iterable.immutable(getB)
+                                .flatMap(bv => func(av, bv)))));
                     }
                 }
                 return n.implementation(new Visitor());
