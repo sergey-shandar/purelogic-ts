@@ -551,7 +551,7 @@ export namespace syncmem {
 
 export namespace asyncmem {
 
-    export type GetArray<T> = Promise<T[]>;
+    export type GetArray<T> = Promise<iterable.Immutable<T>>;
 
     export class AsyncMem {
 
@@ -559,8 +559,8 @@ export namespace asyncmem {
 
         private readonly _dag: dag.Dag = new dag.Dag();
 
-        set<T>(input: bag.Bag<T>, getArray: GetArray<T>): void {
-           this._map.set(input.id, getArray);
+        set<T>(input: bag.Bag<T>, getArray: Promise<iterable.I<T>>): void {
+           this._map.set(input.id, getArray.then(iterable.immutable));
         }
 
         get<T>(b: bag.Bag<T>): GetArray<T> {
@@ -576,10 +576,10 @@ export namespace asyncmem {
                         // if (f === flatMap.identity) { return nodeFunc; }
                         const f = value.func;
                         return this._fromNode(value.node)
-                            .then(x => Array.from(iterable.immutable(x).flatMap(f)));
+                            .then(x => x.flatMap(f));
                     }));
                 // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
-                return Promise.all(linkPromises).then(x => Array.from(iterable.flatten(x)));
+                return Promise.all(linkPromises).then(x => iterable.immutable(x).flatMap(v => v));
             });
         }
 
@@ -593,7 +593,7 @@ export namespace asyncmem {
 
                     input(): never { throw new syncmem.InputError(id); }
 
-                    async one(value: T): GetArray<T> { return [value]; }
+                    async one(value: T): GetArray<T> { return iterable.immutable([value]); }
 
                     async groupBy(
                         input: optimized.Bag<T>,
@@ -604,12 +604,12 @@ export namespace asyncmem {
                         const inputLazyArray = await get(input);
 
                         const map: { [id: string]: T; } = {};
-                        inputLazyArray.forEach(value => {
+                        for (const value of inputLazyArray) {
                             const key = toKey(value);
                             const current = map[key];
                             map[key] = current !== undefined ? reduce(current, value) : value;
-                        });
-                        return Object.keys(map).map(k => map[k]);
+                        };
+                        return iterable.immutable(Object.keys(map).map(k => map[k]));
                     }
 
                     async product<A, B>(
@@ -620,9 +620,7 @@ export namespace asyncmem {
 
                         const getA = await get(a);
                         const getB = await get(b);
-                        return Array.from(iterable.immutable(getA).flatMap(
-                            av => Array.from(iterable.immutable(getB)
-                                .flatMap(bv => func(av, bv)))));
+                        return getA.flatMap(av => getB.flatMap(bv => func(av, bv)));
                     }
                 }
                 return n.implementation(new Visitor());
