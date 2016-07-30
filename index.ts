@@ -1,4 +1,4 @@
-import * as lodash from "lodash";
+import "ts-helpers";
 
 export function lazy<T>(f: () => T): () => T {
     let called = false;
@@ -46,10 +46,7 @@ export namespace iterable {
             const a = this;
             function *result() {
                 for (const cv of a) {
-                    const r = f(cv);
-                    for (const rv of immutable(r)) {
-                        yield rv;
-                    }
+                    yield* immutable(f(cv));
                 }
             }
             return immutable(result);
@@ -58,8 +55,8 @@ export namespace iterable {
         concat<T>(b: I<T>): Immutable<T> {
             const a = this;
             function *result() {
-                for (const av of a) { yield av; }
-                for (const bv of immutable(b)) { yield bv; }
+                yield *a;
+                yield *immutable(b);
             }
             return immutable(result);
         }
@@ -554,15 +551,7 @@ export namespace syncmem {
 
 export namespace asyncmem {
 
-    export type GetArray<T> = Promise<T[]>;
-
-    export class InputError implements Error {
-        readonly name: string = "InputError";
-        readonly message: string;
-        constructor(public readonly bagId: string) {
-            this.message = `InputError: input bag ${bagId} is not defined`;
-        }
-    }
+    export type GetArray<T> = Promise<iterable.Immutable<T>>;
 
     export class AsyncMem {
 
@@ -570,8 +559,8 @@ export namespace asyncmem {
 
         private readonly _dag: dag.Dag = new dag.Dag();
 
-        set<T>(input: bag.Bag<T>, getArray: GetArray<T>): void {
-           this._map.set(input.id, getArray);
+        set<T>(input: bag.Bag<T>, getArray: Promise<iterable.I<T>>): void {
+           this._map.set(input.id, getArray.then(iterable.immutable));
         }
 
         get<T>(b: bag.Bag<T>): GetArray<T> {
@@ -581,15 +570,16 @@ export namespace asyncmem {
         private _get<T>(o: optimized.Bag<T>): GetArray<T> {
             const id = o.id;
             return this._map.get(id, () => {
-                const links = o.array
+                const linkPromises = o.array
                     .map(link => link.implementation(<I>(value: optimized.LinkValue<T, I>) => {
                         // NOTE: possible optimization:
                         // if (f === flatMap.identity) { return nodeFunc; }
                         const f = value.func;
-                        return this._fromNode(value.node).then(x => lodash.flatMap(x, f));
+                        return this._fromNode(value.node)
+                            .then(x => x.flatMap(f));
                     }));
                 // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
-                return Promise.all(links).then(lodash.flatten);
+                return Promise.all(linkPromises).then(iterable.flatten);
             });
         }
 
@@ -601,42 +591,36 @@ export namespace asyncmem {
 
                 class Visitor implements optimized.NodeVisitor<T, GetArray<T>> {
 
-                    input(): GetArray<T> { throw new InputError(id); }
+                    input(): never { throw new syncmem.InputError(id); }
 
-                    one(value: T): GetArray<T> { return Promise.resolve([value]); }
+                    async one(value: T): GetArray<T> { return iterable.immutable([value]); }
 
-                    groupBy(
+                    async groupBy(
                         input: optimized.Bag<T>,
                         toKey: bag.KeyFunc<T>,
                         reduce: bag.ReduceFunc<T>):
                             GetArray<T> {
 
-                        const inputLazyArray = get(input);
-                        return inputLazyArray.then(x => {
-                            const map: { [id: string]: T; } = {};
-                            x.forEach(value => {
-                                const key = toKey(value);
-                                const current = map[key];
-                                map[key] = current !== undefined ? reduce(current, value) : value;
-                            });
-                            return Object.keys(map).map(k => map[k]);
-                        });
+                        const inputLazyArray = await get(input);
+
+                        const map: { [id: string]: T; } = {};
+                        for (const value of inputLazyArray) {
+                            const key = toKey(value);
+                            const current = map[key];
+                            map[key] = current !== undefined ? reduce(current, value) : value;
+                        };
+                        return iterable.immutable(Object.keys(map).map(k => map[k]));
                     }
 
-                    product<A, B>(
+                    async product<A, B>(
                         a: optimized.Bag<A>,
                         b: optimized.Bag<B>,
                         func: bag.ProductFunc<A, B, T>):
                             GetArray<T> {
 
-                        const getA = get(a);
-                        const getB = get(b);
-                        return Promise.all([getA, getB]).then(x => {
-                            const aArray = x[0];
-                            const bArray = x[1];
-                            return lodash.flatMap(
-                                aArray, av => lodash.flatMap(bArray, bv => func(av, bv)));
-                        });
+                        const getA = await get(a);
+                        const getB = await get(b);
+                        return getA.flatMap(av => getB.flatMap(bv => func(av, bv)));
                     }
                 }
                 return n.implementation(new Visitor());
