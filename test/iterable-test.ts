@@ -22,4 +22,5 @@ describe("namespace iterable", function () {
         function *x() { yield 1; yield 4; }
         iterableEqual(iterable.flatten([x, x]), [ 1, 4, 1, 4]);
     });
+    it("identity()", () => iterableEqual(iterable.flatMapIdentity(5), [5]));
 });

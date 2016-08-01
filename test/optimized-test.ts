@@ -1,6 +1,6 @@
 import "mocha";
 import * as chai from "chai";
-import { flatMap, bag, optimized } from "../index";
+import { iterable, bag, optimized } from "../index";
 import { iterableEqual } from "./iterable-helper";
 
 chai.should();
@@ -56,7 +56,7 @@ describe("namespace optimized", function() {
             bag.array.length.should.equal(1);
             bag.array[0].implementation(<I>(x: optimized.LinkValue<string, I>) => {
                 x.node.should.equal(a);
-                x.func.should.equal(flatMap.identity);
+                x.func.should.equal(iterable.flatMapIdentity);
             });
         });
     });
@@ -68,7 +68,7 @@ describe("namespace optimized", function() {
             const a = new optimized.Node(
                 "0", <R>(visitor: optimized.NodeVisitor<number, R>) => visitor.one(10));
             const f = (x: number) => [x, x * x];
-            const link = a.link(flatMap.identity).flatMap(f);
+            const link = a.link(iterable.flatMapIdentity).flatMap(f);
             link.implementation(<I>(x: optimized.LinkValue<number, I>) => {
                 x.node.should.equal(a);
                 // an identity function should be removed
@@ -83,7 +83,7 @@ describe("namespace optimized", function() {
         it("addFunc()", () => {
             const x = new optimized.Node(
                 "0", <R>(visitor: optimized.NodeVisitor<string, R>) => visitor.one("something"));
-            const link = x.link(flatMap.identity).addFunc(() => () => ["xxx"]);
+            const link = x.link(iterable.flatMapIdentity).addFunc(() => () => ["xxx"]);
             link.implementation(<I>(bb: optimized.LinkValue<string, I>) => {
                 bb.node.should.equal(x);
                 iterableEqual(bb.func(<I> <any> "x"), ["x", "xxx"]);
@@ -94,7 +94,7 @@ describe("namespace optimized", function() {
         it("constructor()", () => {
             const node = new optimized.Node(
                 "0", <R>(visitor: optimized.NodeVisitor<number, R>) => visitor.one(10));
-            const x = [node.link(flatMap.identity)];
+            const x = [node.link(iterable.flatMapIdentity)];
             const bag = new optimized.Bag("43", x);
             bag.id.should.equal("43");
             bag.array.should.equal(x);

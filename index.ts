@@ -78,6 +78,12 @@ export namespace iterable {
         return stateless(() => x()[Symbol.iterator]());
     }
 
+    export type FlatMapFunc<I, O> = (value: I) => iterable.I<O>;
+
+    export function flatMapIdentity<T>(value: T): iterable.I<T> {
+        return [value];
+    }
+
     export function flatMap<T, R>(a: I<T>, f: (v: T) => I<R>): I<R> {
         function *result() {
             for (const cv of stateless(a)) {
@@ -110,10 +116,6 @@ export namespace iterable {
  * Flat Map functions.
  */
 export namespace flatMap {
-    export type Func<I, O> = (value: I) => iterable.I<O>;
-    export function identity<T>(value: T): iterable.I<T> {
-        return [value];
-    }
 }
 
 /**
@@ -140,7 +142,7 @@ export namespace bag {
     export class FlatMap<T, I> {
         constructor(
             public readonly input: Bag<I>,
-            public readonly func: flatMap.Func<I, T>) {}
+            public readonly func: iterable.FlatMapFunc<I, T>) {}
     }
 
     export class DisjointUnion<T> {
@@ -218,7 +220,7 @@ export namespace bag {
         /**
          * LINQ: SelectMany
          */
-        flatMap<O>(func: flatMap.Func<T, O>): Bag<O> {
+        flatMap<O>(func: iterable.FlatMapFunc<T, O>): Bag<O> {
             return new Bag(<R>(visitor: Visitor<O, R>) => visitor.flatMap(new FlatMap(this, func)));
         }
 
@@ -328,20 +330,20 @@ export namespace optimized {
             public readonly id: string,
             public readonly implementation: NodeImplementation<T>) {}
 
-        link<O>(func: flatMap.Func<T, O>): Link<O> {
+        link<O>(func: iterable.FlatMapFunc<T, O>): Link<O> {
             const value = new LinkValue(this, func);
             return new Link(<R>(visitor: LinkVisitor<O, R>) => visitor(value));
         }
 
         bag(): Bag<T> {
-            return new Bag(this.id, [this.link(flatMap.identity)]);
+            return new Bag(this.id, [this.link(iterable.flatMapIdentity)]);
         }
     }
 
     export class LinkValue<T, I> {
         constructor(
             public readonly node: Node<I>,
-            public readonly func: flatMap.Func<I, T>) {}
+            public readonly func: iterable.FlatMapFunc<I, T>) {}
     }
 
     export type LinkVisitor<T, R> = <I>(value: LinkValue<T, I>) => R;
@@ -357,18 +359,18 @@ export namespace optimized {
             return this.implementation(<I>(x: LinkValue<T, I>) => x.node.id);
         }
 
-        flatMap<O>(func: flatMap.Func<T, O>): Link<O> {
+        flatMap<O>(func: iterable.FlatMapFunc<T, O>): Link<O> {
             function visitor<I>(x: LinkValue<T, I>): Link<O> {
                 const f = x.func;
-                const newFunc = f !== flatMap.identity
+                const newFunc = f !== iterable.flatMapIdentity
                     ? (value: I) => iterable.toArray(iterable.flatMap(f(value), func))
-                    : <flatMap.Func<I, O>> <any> func;
+                    : <iterable.FlatMapFunc<I, O>> <any> func;
                 return x.node.link(newFunc);
             }
             return this.implementation(visitor);
         }
 
-        addFunc(getFunc: <I>() => flatMap.Func<I, T>): Link<T> {
+        addFunc(getFunc: <I>() => iterable.FlatMapFunc<I, T>): Link<T> {
             function visitor<I>(link: LinkValue<T, I>): Link<T> {
                 const f = link.func;
                 const fNew = getFunc<I>();
@@ -396,7 +398,7 @@ export namespace optimized {
                 .bag();
         }
 
-        flatMap<O>(id: string, func: flatMap.Func<T, O>): Bag<O> {
+        flatMap<O>(id: string, func: iterable.FlatMapFunc<T, O>): Bag<O> {
             return new Bag(id, this.array.map(link => link.flatMap(func)));
         }
 
@@ -407,7 +409,7 @@ export namespace optimized {
             b.array.forEach(bLink => {
                 function bVisitor<B>(x: LinkValue<T, B>): void {
                     const i = aLinks.findIndex(aLink => aLink.nodeId() === x.node.id);
-                    function getFunc<I>(): flatMap.Func<I, T> { return <any> x.func; }
+                    function getFunc<I>(): iterable.FlatMapFunc<I, T> { return <any> x.func; }
                     bLinks.push(i !== -1
                         ? array.spliceOne(aLinks, i).addFunc(getFunc)
                         : bLink);
