@@ -36,59 +36,73 @@ export class Map<T> {
  */
 export namespace iterable {
 
-    export class Immutable<T> implements Iterable<T> {
+    export abstract class Stateless<T> implements Iterable<T> {
 
-        constructor(public readonly getIterator: () => Iterator<T>) {}
+        abstract toArray(): T[];
 
-        [Symbol.iterator]() { return this.getIterator(); }
-
-        flatMap<R>(f: (v: T) => I<R>): Immutable<R> {
-            const a = this;
-            function *result() {
-                for (const cv of a) {
-                    yield* immutable(f(cv));
-                }
-            }
-            return immutable(result);
-        }
-
-        concat<T>(b: I<T>): Immutable<T> {
-            const a = this;
-            function *result() {
-                yield *a;
-                yield *immutable(b);
-            }
-            return immutable(result);
-        }
+        abstract [Symbol.iterator](): Iterator<T>;
     }
 
-    export type I<T> = Immutable<T> | (() => Iterator<T>|T[]) | T[];
+    class FromArray<T> extends Stateless<T> {
+        constructor(private readonly _array: T[]) { super(); }
 
-    function arrayIterator<T>(array: T[]): Iterator<T> {
-        return array[Symbol.iterator]();
+        toArray() { return this._array; }
+        [Symbol.iterator]() { return this._array[Symbol.iterator](); }
     }
 
-    export function immutable<T>(i: I<T>): Immutable<T> {
-        if (i instanceof Immutable) {
+    class FromIterator<T> extends Stateless<T> {
+        constructor(private readonly _f: () => Iterator<T>) { super(); }
+
+        toArray() { return Array.from(this); }
+        [Symbol.iterator]() { return this._f(); }
+    }
+
+    export type I<T> = Stateless<T> | (() => IterableIterator<T>) | T[];
+
+    export function stateless<T>(i: I<T>): Stateless<T> {
+        if (i instanceof Stateless) {
             return i;
         } else if (i instanceof Array) {
-            const a = i;
-            return new Immutable(() => arrayIterator(a));
+            return new FromArray(i);
         } else {
-            const f = i;
-            return new Immutable(() => {
-                const r = f();
-                if (r instanceof Array) {
-                    return arrayIterator(r);
-                } else {
-                    return r;
-                }
-            });
+            return new FromIterator(i);
         }
     }
 
-    export function flatten<T>(c: I<I<T>>): Immutable<T> {
-        return immutable<I<T>>(c).flatMap(v => v);
+    export function toArray<T>(i: I<T>): T[] {
+        return stateless(i).toArray();
+    }
+
+    export function lazyArray<T>(a: () => T[]): I<T> {
+        const x = lazy(a);
+        return stateless(() => x()[Symbol.iterator]());
+    }
+
+    export function flatMap<T, R>(a: I<T>, f: (v: T) => I<R>): I<R> {
+        function *result() {
+            for (const cv of stateless(a)) {
+                yield* stateless(f(cv));
+            }
+        }
+        return stateless(result);
+    }
+
+    export function concat<T>(a: I<T>, b: I<T>): I<T> {
+        function *result() {
+            yield *stateless(a);
+            yield *stateless(b);
+        }
+        return stateless(result);
+    }
+
+    export function flatten<T>(c: I<I<T>>): I<T> {
+        return flatMap(c, v => v);
+    }
+
+    export function forEach<T>(c: I<T>, f: (v: T) => void) {
+        for (const v of stateless(c)) {
+            f(v);
+        }
     }
 }
 
@@ -354,7 +368,7 @@ export namespace optimized {
             function visitor<I>(x: LinkValue<T, I>): Link<O> {
                 const f = x.func;
                 const newFunc = f !== flatMap.identity
-                    ? (value: I) => Array.from(iterable.immutable(f(value)).flatMap(func))
+                    ? (value: I) => iterable.toArray(iterable.flatMap(f(value), func))
                     : <flatMap.Func<I, O>> <any> func;
                 return x.node.link(newFunc);
             }
@@ -474,19 +488,19 @@ export namespace syncmem {
 
     export class SyncMem {
 
-        private readonly _map = new Map<iterable.Immutable<any>>();
+        private readonly _map = new Map<iterable.I<any>>();
 
         private readonly _dag: dag.Dag = new dag.Dag();
 
         set<T>(input: bag.Bag<T>, factory: iterable.I<T>): void {
-           this._map.set(input.id, iterable.immutable(factory));
+           this._map.set(input.id, iterable.stateless(factory));
         }
 
-        get<T>(b: bag.Bag<T>): iterable.Immutable<T> {
+        get<T>(b: bag.Bag<T>): iterable.I<T> {
             return this._get(this._dag.get(b));
         }
 
-        private _get<T>(o: optimized.Bag<T>): iterable.Immutable<T> {
+        private _get<T>(o: optimized.Bag<T>): iterable.I<T> {
             const id = o.id;
             return this._map.get(id, () => {
                 const links = o.array
@@ -495,52 +509,53 @@ export namespace syncmem {
                         // if (f === flatMap.identity) { return nodeFunc; }
                         const f = value.func;
                         const nodeFunc = this._fromNode(value.node);
-                        return nodeFunc.flatMap(f);
+                        return iterable.flatMap(nodeFunc, f);
                     }));
                 // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
                 return iterable.flatten(links);
             });
         }
 
-        private _fromNode<T>(n: optimized.Node<T>): iterable.Immutable<T> {
+        private _fromNode<T>(n: optimized.Node<T>): iterable.I<T> {
             const id = n.id;
             const map = this._map;
             return map.get(id, () => {
                 const get = <I>(b: optimized.Bag<I>) => this._get(b);
 
-                class Visitor implements optimized.NodeVisitor<T, iterable.Immutable<T>> {
+                class Visitor implements optimized.NodeVisitor<T, iterable.I<T>> {
 
                     /**
                      * when input is not defined yet.
                      */
                     input(): never { throw new InputError(id); }
 
-                    one(value: T): iterable.Immutable<T> { return iterable.immutable([value]); }
+                    one(value: T): iterable.Stateless<T> { return iterable.stateless([value]); }
 
                     groupBy(
                         input: optimized.Bag<T>,
                         toKey: bag.KeyFunc<T>,
                         reduce: bag.ReduceFunc<T>):
-                            iterable.Immutable<T> {
+                            iterable.I<T> {
 
                         const inputLazyArray = get(input);
-                        return iterable.immutable(lazy(() => {
+                        return iterable.lazyArray(() => {
                             const map: { [id: string]: T; } = {};
-                            for (const value of inputLazyArray) {
+                            iterable.forEach(inputLazyArray, value => {
                                 const key = toKey(value);
                                 const current = map[key];
                                 map[key] = current !== undefined ? reduce(current, value) : value;
-                            };
+                            });
                             return Object.keys(map).map(k => map[k]);
-                        }));
+                        });
                     }
 
                     product<A, B>(
                         a: optimized.Bag<A>, b: optimized.Bag<B>, func: bag.ProductFunc<A, B, T>
-                    ): iterable.Immutable<T> {
+                    ): iterable.I<T> {
                         const getA = get(a);
                         const getB = get(b);
-                        return getA.flatMap(av => getB.flatMap(bv => func(av, bv)));
+                        return iterable.flatMap(
+                            getA, av => iterable.flatMap(getB, bv => func(av, bv)));
                     }
                 }
                 return n.implementation(new Visitor());
@@ -551,7 +566,7 @@ export namespace syncmem {
 
 export namespace asyncmem {
 
-    export type GetArray<T> = Promise<iterable.Immutable<T>>;
+    export type GetArray<T> = Promise<iterable.I<T>>;
 
     export class AsyncMem {
 
@@ -560,7 +575,7 @@ export namespace asyncmem {
         private readonly _dag: dag.Dag = new dag.Dag();
 
         set<T>(input: bag.Bag<T>, getArray: Promise<iterable.I<T>>): void {
-           this._map.set(input.id, getArray.then(iterable.immutable));
+           this._map.set(input.id, getArray.then(iterable.stateless));
         }
 
         get<T>(b: bag.Bag<T>): GetArray<T> {
@@ -576,7 +591,7 @@ export namespace asyncmem {
                         // if (f === flatMap.identity) { return nodeFunc; }
                         const f = value.func;
                         return this._fromNode(value.node)
-                            .then(x => x.flatMap(f));
+                            .then(x => iterable.flatMap(x, f));
                     }));
                 // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
                 return Promise.all(linkPromises).then(iterable.flatten);
@@ -593,7 +608,7 @@ export namespace asyncmem {
 
                     input(): never { throw new syncmem.InputError(id); }
 
-                    async one(value: T): GetArray<T> { return iterable.immutable([value]); }
+                    async one(value: T): GetArray<T> { return [value]; }
 
                     async groupBy(
                         input: optimized.Bag<T>,
@@ -604,12 +619,12 @@ export namespace asyncmem {
                         const inputLazyArray = await get(input);
 
                         const map: { [id: string]: T; } = {};
-                        for (const value of inputLazyArray) {
+                        iterable.forEach(inputLazyArray, value => {
                             const key = toKey(value);
                             const current = map[key];
                             map[key] = current !== undefined ? reduce(current, value) : value;
-                        };
-                        return iterable.immutable(Object.keys(map).map(k => map[k]));
+                        });
+                        return Object.keys(map).map(k => map[k]);
                     }
 
                     async product<A, B>(
@@ -620,7 +635,8 @@ export namespace asyncmem {
 
                         const getA = await get(a);
                         const getB = await get(b);
-                        return getA.flatMap(av => getB.flatMap(bv => func(av, bv)));
+                        return iterable.flatMap(
+                            getA, av => iterable.flatMap(getB, bv => func(av, bv)));
                     }
                 }
                 return n.implementation(new Visitor());
