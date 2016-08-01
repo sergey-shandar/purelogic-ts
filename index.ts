@@ -493,7 +493,7 @@ export namespace syncmem {
         private readonly _dag: dag.Dag = new dag.Dag();
 
         set<T>(input: bag.Bag<T>, factory: iterable.I<T>): void {
-           this._map.set(input.id, iterable.stateless(factory));
+           this._map.set(input.id, factory);
         }
 
         get<T>(b: bag.Bag<T>): iterable.I<T> {
@@ -529,7 +529,7 @@ export namespace syncmem {
                      */
                     input(): never { throw new InputError(id); }
 
-                    one(value: T): iterable.Stateless<T> { return iterable.stateless([value]); }
+                    one(value: T): iterable.I<T> { return [value]; }
 
                     groupBy(
                         input: optimized.Bag<T>,
@@ -575,7 +575,7 @@ export namespace asyncmem {
         private readonly _dag: dag.Dag = new dag.Dag();
 
         set<T>(input: bag.Bag<T>, getArray: Promise<iterable.I<T>>): void {
-           this._map.set(input.id, getArray.then(iterable.stateless));
+           this._map.set(input.id, getArray);
         }
 
         get<T>(b: bag.Bag<T>): GetArray<T> {
