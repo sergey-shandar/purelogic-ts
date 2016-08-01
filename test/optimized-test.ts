@@ -1,6 +1,7 @@
 import "mocha";
 import * as chai from "chai";
 import { flatMap, bag, optimized } from "../index";
+import { iterableEqual } from "./iterable-helper";
 
 chai.should();
 
@@ -85,7 +86,7 @@ describe("namespace optimized", function() {
             const link = x.link(flatMap.identity).addFunc(() => () => ["xxx"]);
             link.implementation(<I>(bb: optimized.LinkValue<string, I>) => {
                 bb.node.should.equal(x);
-                bb.func(<I> <any> "x").should.deep.equal(["x", "xxx"]);
+                iterableEqual(bb.func(<I> <any> "x"), ["x", "xxx"]);
             });
         });
     });
@@ -149,7 +150,7 @@ describe("namespace optimized", function() {
             d2.array.length.should.equal(1);
             d2.array[0].implementation((x: optimized.LinkValue<number, number>) => {
                 x.node.id.should.equal("101");
-                x.func(10).should.deep.equal([10, 10]);
+                iterableEqual(x.func(10), [10, 10]);
             });
         });
     });
