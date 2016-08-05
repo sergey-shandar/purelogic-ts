@@ -556,9 +556,7 @@ export namespace syncmem {
                     product<A, B>(
                         a: optimized.Bag<A>, b: optimized.Bag<B>, func: iterable.ProductFunc<A, B, T>
                     ): iterable.I<T> {
-                        const getA = get(a);
-                        const getB = get(b);
-                        return iterable.lazyArray(() => iterable.toArray(iterable.product(getA, getB, func)));
+                        return iterable.product(get(a), get(b), func);
                     }
                 }
                 return n.implementation(new Visitor());
