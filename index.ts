@@ -428,20 +428,18 @@ export namespace optimized {
         }
 
         disjointUnion(id: string, b: Bag<T>): Bag<T> {
-            const aLinks: Link<T>[] = [];
-            this.array.forEach(aLink => aLinks.push(aLink));
-            const bLinks: Link<T>[] = [];
-            b.array.forEach(bLink => {
-                function bVisitor<B>(x: LinkValue<T, B>): void {
-                    const i = aLinks.findIndex(aLink => aLink.nodeId() === x.node.id);
-                    function getFunc<I>(): iterable.FlatMapFunc<I, T> { return <any> x.func; }
-                    bLinks.push(i !== -1
-                        ? array.spliceOne(aLinks, i).addFunc(getFunc)
-                        : bLink);
-                }
-                bLink.implementation(bVisitor);
-            });
-            return new Bag(id, aLinks.concat(bLinks));
+            const c = iterable.concat(this.array, b.array);
+            const g = iterable.groupBy(
+                c,
+                x => x.nodeId(),
+                (x, y) => {
+                    function visitor<B>(v: LinkValue<T, B>): Link<T> {
+                        function getFunc<I>(): iterable.FlatMapFunc<I, T> { return <any> v.func; }
+                        return x.addFunc(getFunc);
+                    }
+                    return y.implementation(visitor);
+                });
+            return new Bag(id, iterable.toArray(iterable.values(g)));
         }
     }
 
