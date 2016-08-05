@@ -110,12 +110,12 @@ export namespace iterable {
             f(v);
         }
     }
-}
 
-/**
- * Flat Map functions.
- */
-export namespace flatMap {
+    export type KeyFunc<T> = (value: T) => string;
+
+    export type ReduceFunc<T> = (a: T, b: T) => T;
+
+    export type ProductFunc<A, B, O> = (a: A, b: B) => iterable.I<O>;
 }
 
 /**
@@ -133,12 +133,6 @@ export namespace array {
  */
 export namespace bag {
 
-    export type KeyFunc<T> = (value: T) => string;
-
-    export type ReduceFunc<T> = (a: T, b: T) => T;
-
-    export type ProductFunc<A, B, O> = (a: A, b: B) => O[];
-
     export class FlatMap<T, I> {
         constructor(
             public readonly input: Bag<I>,
@@ -154,15 +148,15 @@ export namespace bag {
     export class GroupBy<T> {
         constructor(
             public readonly input: Bag<T>,
-            public readonly toKey: KeyFunc<T>,
-            public readonly reduce: ReduceFunc<T>) {}
+            public readonly toKey: iterable.KeyFunc<T>,
+            public readonly reduce: iterable.ReduceFunc<T>) {}
     }
 
     export class Product<T, A, B> {
         constructor(
             public readonly a: Bag<A>,
             public readonly b: Bag<B>,
-            public readonly func: ProductFunc<A, B, T>) {}
+            public readonly func: iterable.ProductFunc<A, B, T>) {}
     }
 
     export interface Visitor<T, R> {
@@ -232,12 +226,12 @@ export namespace bag {
         /**
          * LINQ: GroupBy
          */
-        groupBy(toKey: KeyFunc<T>, reduce: ReduceFunc<T>): Bag<T> {
+        groupBy(toKey: iterable.KeyFunc<T>, reduce: iterable.ReduceFunc<T>): Bag<T> {
             return new Bag(<R>(visitor: Visitor<T, R>) =>
                 visitor.groupBy(new GroupBy(this, toKey, reduce)));
         }
 
-        product<B, O>(b: Bag<B>, func: ProductFunc<T, B, O>): Bag<O> {
+        product<B, O>(b: Bag<B>, func: iterable.ProductFunc<T, B, O>): Bag<O> {
             return new Bag(<R>(visitor: Visitor<O, R>) => visitor.product(new Product(this, b, func)));
         }
 
@@ -262,7 +256,7 @@ export namespace bag {
         /**
          * LINQ: Accumulate
          */
-        reduce(func: ReduceFunc<T>): Bag<T> {
+        reduce(func: iterable.ReduceFunc<T>): Bag<T> {
             return this.groupBy(() => "", func);
         }
 
@@ -278,10 +272,10 @@ export namespace bag {
 
         join<B>(
             b: Bag<B>,
-            keyT: KeyFunc<T>,
-            keyB: KeyFunc<B>,
-            reduceT: ReduceFunc<T>,
-            reduceB: ReduceFunc<B>):
+            keyT: iterable.KeyFunc<T>,
+            keyB: iterable.KeyFunc<B>,
+            reduceT: iterable.ReduceFunc<T>,
+            reduceB: iterable.ReduceFunc<B>):
                 Bag<Join<T, B>> {
 
             function join(k: string, t: T|undefined, b: B|undefined) {
@@ -292,7 +286,7 @@ export namespace bag {
             const bagB = b.map(x => join(keyB(x), undefined, x));
             const bagC = bagT.disjointUnion(bagB);
 
-            function reduceOptional<M>(reduce: ReduceFunc<M>) {
+            function reduceOptional<M>(reduce: iterable.ReduceFunc<M>) {
                 return (x: M|undefined, y: M|undefined) => {
                     if (x === undefined) { return y; }
                     if (y === undefined) { return x; }
@@ -318,8 +312,8 @@ export namespace optimized {
     export interface NodeVisitor<T, R> {
         input(): R;
         one(value: T): R;
-        groupBy(inputs: Bag<T>, toKey: bag.KeyFunc<T>, reduce: bag.ReduceFunc<T>): R;
-        product<A, B>(a: Bag<A>, b: Bag<B>, func: bag.ProductFunc<A, B, T>): R;
+        groupBy(inputs: Bag<T>, toKey: iterable.KeyFunc<T>, reduce: iterable.ReduceFunc<T>): R;
+        product<A, B>(a: Bag<A>, b: Bag<B>, func: iterable.ProductFunc<A, B, T>): R;
     }
 
     export type NodeImplementation<T> = <R>(visitor: NodeVisitor<T, R>) => R;
@@ -386,14 +380,14 @@ export namespace optimized {
             public readonly id: string,
             public readonly array: Link<T>[]) {}
 
-        groupBy(id: string, toKey: bag.KeyFunc<T>, reduce: bag.ReduceFunc<T>): Bag<T> {
+        groupBy(id: string, toKey: iterable.KeyFunc<T>, reduce: iterable.ReduceFunc<T>): Bag<T> {
             return new Node(
                     id,
                     <R>(visitor: NodeVisitor<T, R>) => visitor.groupBy(this, toKey, reduce))
                 .bag();
         }
 
-        product<B, O>(id: string, b: Bag<B>, func: bag.ProductFunc<T, B, O>): Bag<O> {
+        product<B, O>(id: string, b: Bag<B>, func: iterable.ProductFunc<T, B, O>): Bag<O> {
             return new Node(id, <R>(visitor: NodeVisitor<O, R>) => visitor.product(this, b, func))
                 .bag();
         }
@@ -528,8 +522,8 @@ export namespace syncmem {
 
                     groupBy(
                         input: optimized.Bag<T>,
-                        toKey: bag.KeyFunc<T>,
-                        reduce: bag.ReduceFunc<T>):
+                        toKey: iterable.KeyFunc<T>,
+                        reduce: iterable.ReduceFunc<T>):
                             iterable.I<T> {
 
                         const inputLazyArray = get(input);
@@ -545,7 +539,7 @@ export namespace syncmem {
                     }
 
                     product<A, B>(
-                        a: optimized.Bag<A>, b: optimized.Bag<B>, func: bag.ProductFunc<A, B, T>
+                        a: optimized.Bag<A>, b: optimized.Bag<B>, func: iterable.ProductFunc<A, B, T>
                     ): iterable.I<T> {
                         const getA = get(a);
                         const getB = get(b);
@@ -607,8 +601,8 @@ export namespace asyncmem {
 
                     async groupBy(
                         input: optimized.Bag<T>,
-                        toKey: bag.KeyFunc<T>,
-                        reduce: bag.ReduceFunc<T>):
+                        toKey: iterable.KeyFunc<T>,
+                        reduce: iterable.ReduceFunc<T>):
                             GetArray<T> {
 
                         const inputLazyArray = await get(input);
@@ -625,7 +619,7 @@ export namespace asyncmem {
                     async product<A, B>(
                         a: optimized.Bag<A>,
                         b: optimized.Bag<B>,
-                        func: bag.ProductFunc<A, B, T>):
+                        func: iterable.ProductFunc<A, B, T>):
                             GetArray<T> {
 
                         const getA = await get(a);

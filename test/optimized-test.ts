@@ -1,6 +1,6 @@
 import "mocha";
 import * as chai from "chai";
-import { iterable, bag, optimized } from "../index";
+import { iterable, optimized } from "../index";
 import { iterableEqual } from "./iterable-helper";
 
 chai.should();
@@ -8,8 +8,12 @@ chai.should();
 interface OptionalBagVisitor<T> {
     input?: (id: number) => void;
     one?: (value: T) => void;
-    groupBy?: (inputs: optimized.Bag<T>, toKey: bag.KeyFunc<T>, reduce: bag.ReduceFunc<T>) => void;
-    product?: <A, B>(a: optimized.Bag<A>, b: optimized.Bag<B>, func: bag.ProductFunc<A, B, T>) => void;
+    groupBy?: (
+        inputs: optimized.Bag<T>, toKey: iterable.KeyFunc<T>, reduce: iterable.ReduceFunc<T>) =>
+        void;
+    product?: <A, B>(
+        a: optimized.Bag<A>, b: optimized.Bag<B>, func: iterable.ProductFunc<A, B, T>) =>
+        void;
 }
 
 function check<T>(bag: optimized.Node<T>, visitor: OptionalBagVisitor<T>) {
