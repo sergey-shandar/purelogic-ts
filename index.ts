@@ -147,6 +147,10 @@ export namespace iterable {
         });
         return result;
     }
+
+    export function product<A, B, R>(a: I<A>, b: I<B>, f: ProductFunc<A, B, R>): I<R> {
+        return flatMap(a, av => flatMap(b, bv => f(av, bv)));
+    }
 }
 
 /**
@@ -554,8 +558,7 @@ export namespace syncmem {
                     ): iterable.I<T> {
                         const getA = get(a);
                         const getB = get(b);
-                        return iterable.flatMap(
-                            getA, av => iterable.flatMap(getB, bv => func(av, bv)));
+                        return iterable.lazyArray(() => iterable.toArray(iterable.product(getA, getB, func)));
                     }
                 }
                 return n.implementation(new Visitor());
@@ -628,8 +631,7 @@ export namespace asyncmem {
 
                         const getA = await get(a);
                         const getB = await get(b);
-                        return iterable.flatMap(
-                            getA, av => iterable.flatMap(getB, bv => func(av, bv)));
+                        return iterable.product(getA, getB, func);
                     }
                 }
                 return n.implementation(new Visitor());
