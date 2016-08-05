@@ -26,5 +26,6 @@ describe("namespace iterable", function () {
     it("groupBy()", () => {
         const m = iterable.groupBy([ "a", "b", "x", "b" ], k => k, (a, b) => a + b);
         m.should.deep.equal({ "a": "a", "b": "bb", "x": "x" });
-    })
+    });
+    it("values()", () => iterableEqual(iterable.values({ a: "x", b: "c"}), ["x", "c"]));
 });
