@@ -12,7 +12,7 @@ export function lazy<T>(f: () => T): () => T {
     };
 }
 
-export class Map<T> {
+export class CacheMap<T> {
 
     private readonly _map: { [id: string]: T } = {};
 
@@ -116,6 +116,20 @@ export namespace iterable {
     export type ReduceFunc<T> = (a: T, b: T) => T;
 
     export type ProductFunc<A, B, O> = (a: A, b: B) => iterable.I<O>;
+
+    export interface Map<T> {
+        [id: string]: T;
+    }
+
+    export function groupBy<T>(c: I<T>, key: KeyFunc<T>, reduce: ReduceFunc<T>): Map<T> {
+        const result: Map<T> = {};
+        for (const v of stateless(c)) {
+            const k = key(v);
+            const old = result[k];
+            result[k] = old === undefined ? v : reduce(old, v);
+        }
+        return result;
+    }
 }
 
 /**
@@ -430,7 +444,7 @@ export namespace dag {
 
     export class Dag {
 
-        private readonly _map = new Map<any>();
+        private readonly _map = new CacheMap<any>();
 
         get<T>(bag: bag.Bag<T>): optimized.Bag<T> {
             const id = bag.id;
@@ -477,7 +491,7 @@ export namespace syncmem {
 
     export class SyncMem {
 
-        private readonly _map = new Map<iterable.I<any>>();
+        private readonly _map = new CacheMap<iterable.I<any>>();
 
         private readonly _dag: dag.Dag = new dag.Dag();
 
@@ -559,7 +573,7 @@ export namespace asyncmem {
 
     export class AsyncMem {
 
-        private readonly _map = new Map<GetArray<any>>();
+        private readonly _map = new CacheMap<GetArray<any>>();
 
         private readonly _dag: dag.Dag = new dag.Dag();
 
