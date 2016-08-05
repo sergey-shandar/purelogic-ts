@@ -93,6 +93,10 @@ export namespace iterable {
         return stateless(result);
     }
 
+    export function map<T, R>(a: I<T>, f: (v: T) => R): I<R> {
+        return flatMap(a, x => [f(x)]);
+    }
+
     export function concat<T>(a: I<T>, b: I<T>): I<T> {
         function *result() {
             yield *stateless(a);
@@ -119,6 +123,19 @@ export namespace iterable {
 
     export interface Map<T> {
         [id: string]: T;
+    }
+
+    export function keys<T>(m: Map<T>): I<string> {
+        function *result() {
+            for (const k in m) {
+                yield k;
+            }
+        }
+        return stateless(result);
+    }
+
+    export function values<T>(m: Map<T>): I<T> {
+        return map(keys(m), k => m[k]);
     }
 
     export function groupBy<T>(c: I<T>, key: KeyFunc<T>, reduce: ReduceFunc<T>): Map<T> {
