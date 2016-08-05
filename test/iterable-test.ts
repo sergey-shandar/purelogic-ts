@@ -23,4 +23,8 @@ describe("namespace iterable", function () {
         iterableEqual(iterable.flatten([x, x]), [ 1, 4, 1, 4]);
     });
     it("identity()", () => iterableEqual(iterable.flatMapIdentity(5), [5]));
+    it("groupBy()", () => {
+        const m = iterable.groupBy([ "a", "b", "x", "b" ], k => k, (a, b) => a + b);
+        m.should.deep.equal({ "a": "a", "b": "bb", "x": "x" });
+    })
 });
