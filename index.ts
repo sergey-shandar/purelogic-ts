@@ -140,11 +140,11 @@ export namespace iterable {
 
     export function groupBy<T>(c: I<T>, key: KeyFunc<T>, reduce: ReduceFunc<T>): Map<T> {
         const result: Map<T> = {};
-        for (const v of stateless(c)) {
+        forEach(c, v => {
             const k = key(v);
             const old = result[k];
             result[k] = old === undefined ? v : reduce(old, v);
-        }
+        });
         return result;
     }
 }
@@ -614,15 +614,10 @@ export namespace asyncmem {
                         reduce: iterable.ReduceFunc<T>):
                             Promise<iterable.I<T>> {
 
-                        const inputLazyArray = await get(input);
+                        const i = await get(input);
 
-                        const map: { [id: string]: T; } = {};
-                        iterable.forEach(inputLazyArray, value => {
-                            const key = toKey(value);
-                            const current = map[key];
-                            map[key] = current !== undefined ? reduce(current, value) : value;
-                        });
-                        return Object.keys(map).map(k => map[k]);
+                        return iterable.toArray(
+                            iterable.values(iterable.groupBy(i, toKey, reduce)));
                     }
 
                     async product<A, B>(
