@@ -114,6 +114,8 @@ export namespace iterable {
     export type KeyFunc<T> = (value: T) => string;
 
     export type ReduceFunc<T> = (a: T, b: T) => T;
+
+    export type ProductFunc<A, B, O> = (a: A, b: B) => iterable.I<O>;
 }
 
 /**
@@ -130,8 +132,6 @@ export namespace array {
  * Bag type and related functions.
  */
 export namespace bag {
-
-    export type ProductFunc<A, B, O> = (a: A, b: B) => O[];
 
     export class FlatMap<T, I> {
         constructor(
@@ -156,7 +156,7 @@ export namespace bag {
         constructor(
             public readonly a: Bag<A>,
             public readonly b: Bag<B>,
-            public readonly func: ProductFunc<A, B, T>) {}
+            public readonly func: iterable.ProductFunc<A, B, T>) {}
     }
 
     export interface Visitor<T, R> {
@@ -231,7 +231,7 @@ export namespace bag {
                 visitor.groupBy(new GroupBy(this, toKey, reduce)));
         }
 
-        product<B, O>(b: Bag<B>, func: ProductFunc<T, B, O>): Bag<O> {
+        product<B, O>(b: Bag<B>, func: iterable.ProductFunc<T, B, O>): Bag<O> {
             return new Bag(<R>(visitor: Visitor<O, R>) => visitor.product(new Product(this, b, func)));
         }
 
@@ -313,7 +313,7 @@ export namespace optimized {
         input(): R;
         one(value: T): R;
         groupBy(inputs: Bag<T>, toKey: iterable.KeyFunc<T>, reduce: iterable.ReduceFunc<T>): R;
-        product<A, B>(a: Bag<A>, b: Bag<B>, func: bag.ProductFunc<A, B, T>): R;
+        product<A, B>(a: Bag<A>, b: Bag<B>, func: iterable.ProductFunc<A, B, T>): R;
     }
 
     export type NodeImplementation<T> = <R>(visitor: NodeVisitor<T, R>) => R;
@@ -387,7 +387,7 @@ export namespace optimized {
                 .bag();
         }
 
-        product<B, O>(id: string, b: Bag<B>, func: bag.ProductFunc<T, B, O>): Bag<O> {
+        product<B, O>(id: string, b: Bag<B>, func: iterable.ProductFunc<T, B, O>): Bag<O> {
             return new Node(id, <R>(visitor: NodeVisitor<O, R>) => visitor.product(this, b, func))
                 .bag();
         }
@@ -539,7 +539,7 @@ export namespace syncmem {
                     }
 
                     product<A, B>(
-                        a: optimized.Bag<A>, b: optimized.Bag<B>, func: bag.ProductFunc<A, B, T>
+                        a: optimized.Bag<A>, b: optimized.Bag<B>, func: iterable.ProductFunc<A, B, T>
                     ): iterable.I<T> {
                         const getA = get(a);
                         const getB = get(b);
@@ -619,7 +619,7 @@ export namespace asyncmem {
                     async product<A, B>(
                         a: optimized.Bag<A>,
                         b: optimized.Bag<B>,
-                        func: bag.ProductFunc<A, B, T>):
+                        func: iterable.ProductFunc<A, B, T>):
                             GetArray<T> {
 
                         const getA = await get(a);
