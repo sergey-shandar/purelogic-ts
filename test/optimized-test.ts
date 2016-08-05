@@ -149,7 +149,7 @@ describe("namespace optimized", function() {
             const a = optimized.one("101", 1);
             const b = optimized.one("1", 2);
             const d = a.disjointUnion("2", b);
-            d.array.should.deep.equal([a.array[0], b.array[0]]);
+            d.array.should.deep.equal([b.array[0], a.array[0]]);
             const d2 = a.disjointUnion("3", a);
             d2.array.length.should.equal(1);
             d2.array[0].implementation((x: optimized.LinkValue<number, number>) => {
