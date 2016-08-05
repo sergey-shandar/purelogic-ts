@@ -545,16 +545,8 @@ export namespace syncmem {
                         reduce: iterable.ReduceFunc<T>):
                             iterable.I<T> {
 
-                        const inputLazyArray = get(input);
-                        return iterable.lazyArray(() => {
-                            const map: { [id: string]: T; } = {};
-                            iterable.forEach(inputLazyArray, value => {
-                                const key = toKey(value);
-                                const current = map[key];
-                                map[key] = current !== undefined ? reduce(current, value) : value;
-                            });
-                            return Object.keys(map).map(k => map[k]);
-                        });
+                        return iterable.lazyArray(() => iterable.toArray(
+                            iterable.values(iterable.groupBy(get(input), toKey, reduce))));
                     }
 
                     product<A, B>(
