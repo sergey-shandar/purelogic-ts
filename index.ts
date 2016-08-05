@@ -150,16 +150,6 @@ export namespace iterable {
 }
 
 /**
- * Array utilities.
- */
-export namespace array {
-
-    export function spliceOne<T>(array: T[], i: number): T {
-        return array.splice(i, 1)[0];
-    }
-}
-
-/**
  * Bag type and related functions.
  */
 export namespace bag {
