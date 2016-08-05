@@ -584,11 +584,9 @@ export namespace syncmem {
 
 export namespace asyncmem {
 
-    export type GetArray<T> = Promise<iterable.I<T>>;
-
     export class AsyncMem {
 
-        private readonly _map = new CacheMap<GetArray<any>>();
+        private readonly _map = new CacheMap<Promise<iterable.I<any>>>();
 
         private readonly _dag: dag.Dag = new dag.Dag();
 
@@ -596,11 +594,11 @@ export namespace asyncmem {
            this._map.set(input.id, getArray);
         }
 
-        get<T>(b: bag.Bag<T>): GetArray<T> {
+        get<T>(b: bag.Bag<T>): Promise<iterable.I<T>> {
             return this._get(this._dag.get(b));
         }
 
-        private _get<T>(o: optimized.Bag<T>): GetArray<T> {
+        private _get<T>(o: optimized.Bag<T>): Promise<iterable.I<T>> {
             const id = o.id;
             return this._map.get(id, () => {
                 const linkPromises = o.array
@@ -616,23 +614,23 @@ export namespace asyncmem {
             });
         }
 
-        private _fromNode<T>(n: optimized.Node<T>): GetArray<T> {
+        private _fromNode<T>(n: optimized.Node<T>): Promise<iterable.I<T>> {
             const id = n.id;
             const map = this._map;
             return map.get(id, () => {
                 const get = <I>(b: optimized.Bag<I>) => this._get(b);
 
-                class Visitor implements optimized.NodeVisitor<T, GetArray<T>> {
+                class Visitor implements optimized.NodeVisitor<T, Promise<iterable.I<T>>> {
 
                     input(): never { throw new syncmem.InputError(id); }
 
-                    async one(value: T): GetArray<T> { return [value]; }
+                    async one(value: T): Promise<iterable.I<T>> { return [value]; }
 
                     async groupBy(
                         input: optimized.Bag<T>,
                         toKey: iterable.KeyFunc<T>,
                         reduce: iterable.ReduceFunc<T>):
-                            GetArray<T> {
+                            Promise<iterable.I<T>> {
 
                         const inputLazyArray = await get(input);
 
@@ -649,7 +647,7 @@ export namespace asyncmem {
                         a: optimized.Bag<A>,
                         b: optimized.Bag<B>,
                         func: iterable.ProductFunc<A, B, T>):
-                            GetArray<T> {
+                            Promise<iterable.I<T>> {
 
                         const getA = await get(a);
                         const getB = await get(b);
