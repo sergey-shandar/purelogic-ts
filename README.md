@@ -8,13 +8,17 @@ PureLogic-TS is an
 [![npm version](https://badge.fury.io/js/purelogic-ts.svg)](https://badge.fury.io/js/purelogic-ts)
 [![Build Status](https://travis-ci.org/sergey-shandar/purelogic-ts.svg?branch=master)](https://travis-ci.org/sergey-shandar/purelogic-ts)
 
-[Web Site](http://sergey-shandar.github.io/purelogic-ts)
+## Iterable Type
+
+```ts
+type I<T> = Stateless<T> | () => Iterable<T> | T[];
+```
 
 ## Bag Types
 
 - Input
 - One
-- Flatten
+- FlatMap
 - DisjointUnion
 - GroupBy. The key is always a string. [ES6 Map](https://tc39.github.io/ecma262/#sec-map-objects) shouldn't be used because some back-ends may serialize objects.
 - Product
