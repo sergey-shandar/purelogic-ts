@@ -1,3 +1,5 @@
-import { bag } from "purelogic-ts";
+import { iterable } from "purelogic-ts";
 
-bag.one(6);
+function *x() { yield 1; }
+
+iterable.stateless(x);
