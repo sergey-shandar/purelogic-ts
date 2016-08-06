@@ -34,4 +34,12 @@ describe("namespace iterable", function () {
         iterable.forEach(i, v => x.push(v.toString()));
         x.should.deep.equal(["1", "2", "3"]);
     });
+    it("cache()", () => {
+        function *result() { yield 1; yield 2; }
+        const x = iterable.cache(result);
+        const a = iterable.toArray(x);
+        a.should.deep.equal([1, 2]);
+        const b = iterable.toArray(x);
+        b.should.equal(a);
+    });
 });
