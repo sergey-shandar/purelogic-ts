@@ -162,6 +162,15 @@ export namespace iterable {
     export function product<A, B, R>(a: I<A>, b: I<B>, f: ProductFunc<A, B, R>): I<R> {
         return flatMap(a, av => flatMap(b, bv => f(av, bv)));
     }
+
+    export function range(a: number, b: number): I<number> {
+        function *result() {
+            for (let i = a; i < b; ++i) {
+                yield i;
+            }
+        }
+        return stateless(result);
+    }
 }
 
 /**
