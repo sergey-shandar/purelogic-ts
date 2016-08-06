@@ -28,4 +28,10 @@ describe("namespace iterable", function () {
         m.should.deep.equal({ "a": "a", "b": "bb", "x": "x" });
     });
     it("values()", () => iterableEqual(iterable.values({ a: "x", b: "c"}), ["x", "c"]));
+    it("forEach()", () => {
+        const i = [ 1, 2, 3 ];
+        const x: string[] = [];
+        iterable.forEach(i, v => x.push(v.toString()));
+        x.should.deep.equal(["1", "2", "3"]);
+    });
 });

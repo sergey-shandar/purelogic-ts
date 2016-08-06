@@ -140,12 +140,16 @@ export namespace iterable {
 
     export function groupBy<T>(c: I<T>, key: KeyFunc<T>, reduce: ReduceFunc<T>): Map<T> {
         const result: Map<T> = {};
-        for (const v of stateless(c)) {
+        forEach(c, v => {
             const k = key(v);
             const old = result[k];
             result[k] = old === undefined ? v : reduce(old, v);
-        }
+        });
         return result;
+    }
+
+    export function product<A, B, R>(a: I<A>, b: I<B>, f: ProductFunc<A, B, R>): I<R> {
+        return flatMap(a, av => flatMap(b, bv => f(av, bv)));
     }
 }
 
@@ -552,10 +556,7 @@ export namespace syncmem {
                     product<A, B>(
                         a: optimized.Bag<A>, b: optimized.Bag<B>, func: iterable.ProductFunc<A, B, T>
                     ): iterable.I<T> {
-                        const getA = get(a);
-                        const getB = get(b);
-                        return iterable.flatMap(
-                            getA, av => iterable.flatMap(getB, bv => func(av, bv)));
+                        return iterable.product(get(a), get(b), func);
                     }
                 }
                 return n.implementation(new Visitor());
@@ -614,15 +615,10 @@ export namespace asyncmem {
                         reduce: iterable.ReduceFunc<T>):
                             Promise<iterable.I<T>> {
 
-                        const inputLazyArray = await get(input);
+                        const i = await get(input);
 
-                        const map: { [id: string]: T; } = {};
-                        iterable.forEach(inputLazyArray, value => {
-                            const key = toKey(value);
-                            const current = map[key];
-                            map[key] = current !== undefined ? reduce(current, value) : value;
-                        });
-                        return Object.keys(map).map(k => map[k]);
+                        return iterable.toArray(
+                            iterable.values(iterable.groupBy(i, toKey, reduce)));
                     }
 
                     async product<A, B>(
@@ -633,8 +629,7 @@ export namespace asyncmem {
 
                         const getA = await get(a);
                         const getB = await get(b);
-                        return iterable.flatMap(
-                            getA, av => iterable.flatMap(getB, bv => func(av, bv)));
+                        return iterable.product(getA, getB, func);
                     }
                 }
                 return n.implementation(new Visitor());
