@@ -1,5 +1,9 @@
 import { iterable } from "purelogic-ts";
 
-function *x() { yield 1; }
+console.log("start");
 
-iterable.stateless(x);
+// iterable.toArray(iterable.range(0, 10000000));
+
+iterable.groupBy(iterable.range(0, 10000000), x => x.toString(), (a, _) => a);
+
+console.log("end");
