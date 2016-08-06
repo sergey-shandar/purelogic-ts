@@ -57,6 +57,18 @@ export namespace iterable {
         [Symbol.iterator]() { return this._f(); }
     }
 
+    class Cache<T> extends Stateless<T> {
+        private _getArray: () => T[];
+
+        constructor(i: I<T>) {
+            super();
+            this._getArray = lazy(() => toArray(i));
+        }
+
+        toArray() { return this._getArray(); }
+        [Symbol.iterator]() { return this._getArray()[Symbol.iterator](); }
+    }
+
     export type I<T> = Stateless<T> | (() => IterableIterator<T>) | T[];
 
     export function stateless<T>(i: I<T>): Stateless<T> {
@@ -73,9 +85,8 @@ export namespace iterable {
         return stateless(i).toArray();
     }
 
-    export function lazyArray<T>(a: () => T[]): I<T> {
-        const x = lazy(a);
-        return stateless(() => x()[Symbol.iterator]());
+    export function cache<T>(a: I<T>): I<T> {
+        return new Cache(a);
     }
 
     export type FlatMapFunc<I, O> = (value: I) => iterable.I<O>;
@@ -257,7 +268,8 @@ export namespace bag {
         }
 
         product<B, O>(b: Bag<B>, func: iterable.ProductFunc<T, B, O>): Bag<O> {
-            return new Bag(<R>(visitor: Visitor<O, R>) => visitor.product(new Product(this, b, func)));
+            return new Bag(<R>(visitor: Visitor<O, R>) =>
+                visitor.product(new Product(this, b, func)));
         }
 
         /**
@@ -300,8 +312,8 @@ export namespace bag {
             keyT: iterable.KeyFunc<T>,
             keyB: iterable.KeyFunc<B>,
             reduceT: iterable.ReduceFunc<T>,
-            reduceB: iterable.ReduceFunc<B>):
-                Bag<Join<T, B>> {
+            reduceB: iterable.ReduceFunc<B>
+        ): Bag<Join<T, B>> {
 
             function join(k: string, t: T|undefined, b: B|undefined) {
                 return new Join(k, t, b);
@@ -546,11 +558,10 @@ export namespace syncmem {
                     groupBy(
                         input: optimized.Bag<T>,
                         toKey: iterable.KeyFunc<T>,
-                        reduce: iterable.ReduceFunc<T>):
-                            iterable.I<T> {
-
-                        return iterable.lazyArray(() => iterable.toArray(
-                            iterable.values(iterable.groupBy(get(input), toKey, reduce))));
+                        reduce: iterable.ReduceFunc<T>
+                    ): iterable.I<T> {
+                        return iterable.cache(iterable.values(iterable.groupBy(
+                            get(input), toKey, reduce)));
                     }
 
                     product<A, B>(
@@ -612,21 +623,18 @@ export namespace asyncmem {
                     async groupBy(
                         input: optimized.Bag<T>,
                         toKey: iterable.KeyFunc<T>,
-                        reduce: iterable.ReduceFunc<T>):
-                            Promise<iterable.I<T>> {
-
+                        reduce: iterable.ReduceFunc<T>
+                    ): Promise<iterable.I<T>> {
                         const i = await get(input);
-
-                        return iterable.toArray(
+                        return iterable.cache(
                             iterable.values(iterable.groupBy(i, toKey, reduce)));
                     }
 
                     async product<A, B>(
                         a: optimized.Bag<A>,
                         b: optimized.Bag<B>,
-                        func: iterable.ProductFunc<A, B, T>):
-                            Promise<iterable.I<T>> {
-
+                        func: iterable.ProductFunc<A, B, T>
+                    ): Promise<iterable.I<T>> {
                         const getA = await get(a);
                         const getB = await get(b);
                         return iterable.product(getA, getB, func);
