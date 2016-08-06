@@ -658,8 +658,7 @@ export namespace asyncmem {
                         reduce: iterable.ReduceFunc<T>
                     ): Promise<iterable.I<T>> {
                         const i = await get(input);
-                        return iterable.cache(
-                            iterable.values(iterable.groupBy(i, toKey, reduce)));
+                        return iterable.values(await iterable.asyncGroupBy(i, toKey, reduce));
                     }
 
                     async product<A, B>(
