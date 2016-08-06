@@ -176,11 +176,23 @@ export namespace iterable {
         return stateless(result);
     }
 
-    export async function asyncForEach<T>(c: iterable.I<T>, f: (v: T) => void): Promise<void> {
-        for (const v of iterable.stateless(c)) {
+    export async function asyncForEach<T>(c: I<T>, f: (v: T) => void): Promise<void> {
+        for (const v of stateless(c)) {
             f(v);
             await immediate();
         }
+    }
+
+    export async function asyncGroupBy<T>(
+        c: I<T>, key: KeyFunc<T>, reduce: ReduceFunc<T>): Promise<Map<T>> {
+
+        const result: iterable.Map<T> = {};
+        await asyncForEach(c, v => {
+            const k = key(v);
+            const old = result[k];
+            result[k] = old === undefined ? v : reduce(old, v);
+        });
+        return result;
     }
 }
 
