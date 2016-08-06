@@ -31,7 +31,6 @@ export class CacheMap<T> {
     }
 }
 
-
 export function immediate(): Promise<void> {
     return new Promise(resolve => setImmediate(resolve));
 }
@@ -175,6 +174,13 @@ export namespace iterable {
             }
         }
         return stateless(result);
+    }
+
+    export async function asyncForEach<T>(c: iterable.I<T>, f: (v: T) => void): Promise<void> {
+        for (const v of iterable.stateless(c)) {
+            f(v);
+            await immediate();
+        }
     }
 }
 

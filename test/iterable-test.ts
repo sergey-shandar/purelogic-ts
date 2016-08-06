@@ -43,4 +43,9 @@ describe("namespace iterable", function () {
         b.should.equal(a);
     });
     it("range()", () => iterableEqual(iterable.range(10, 15), [10, 11, 12, 13, 14]));
+    it("asyncForEach()", async () => {
+        let result = 0;
+        await iterable.asyncForEach(iterable.range(0, 100), v => result += v);
+        result.should.equal(99 * 100 / 2);
+    });
 });
