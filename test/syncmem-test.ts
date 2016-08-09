@@ -1,4 +1,4 @@
-import { bag, syncmem } from "../index";
+import { bag, syncmem, iterable } from "../index";
 import * as chai from "chai";
 import { iterableEqual } from "./iterable-helper";
 
@@ -45,5 +45,19 @@ describe("namespace syncmem", function() {
             function getUnknownBag() { return syncMem.get(unknownBag); }
             getUnknownBag.should.throw();
         });
+        it("cache reduce", () => {
+            let counter = 0;
+            const r = bag.range(100, 102).reduce((a, b) => {
+                ++counter;
+                return a + b;
+            });
+
+            const m = new syncmem.SyncMem();
+
+            iterable.toArray(m.get(r)).should.deep.equal([201]);
+            iterable.toArray(m.get(r)).should.deep.equal([201]);
+
+            counter.should.equal(1);
+        })
     });
 });
