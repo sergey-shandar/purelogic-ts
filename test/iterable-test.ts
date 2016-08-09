@@ -41,6 +41,7 @@ describe("namespace iterable", function () {
         a.should.deep.equal([1, 2]);
         const b = iterable.toArray(x);
         b.should.equal(a);
+        iterableEqual(iterable.map(x, v => v * v), [1, 4]);
     });
     it("range()", () => iterableEqual(iterable.range(10, 15), [10, 11, 12, 13, 14]));
     it("asyncForEach()", async () => {

@@ -596,8 +596,8 @@ export namespace syncmem {
                         toKey: iterable.KeyFunc<T>,
                         reduce: iterable.ReduceFunc<T>
                     ): iterable.I<T> {
-                        return iterable.cache(iterable.values(iterable.groupBy(
-                            get(input), toKey, reduce)));
+                        return iterable.values(iterable.groupBy(
+                            get(input), toKey, reduce));
                     }
 
                     product<A, B>(
