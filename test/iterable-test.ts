@@ -35,13 +35,25 @@ describe("namespace iterable", function () {
         x.should.deep.equal(["1", "2", "3"]);
     });
     it("cache()", () => {
-        function *result() { yield 1; yield 2; }
+        let counter = 0;
+        function *result() {
+            yield 1;
+            yield 2;
+            ++counter;
+        }
         const x = iterable.cache(result);
+        counter.should.equal(0);
+
         const a = iterable.toArray(x);
+        counter.should.equal(1);
         a.should.deep.equal([1, 2]);
+
         const b = iterable.toArray(x);
+        counter.should.equal(1);
         b.should.equal(a);
+
         iterableEqual(iterable.map(x, v => v * v), [1, 4]);
+        counter.should.equal(1);
     });
     it("range()", () => iterableEqual(iterable.range(10, 15), [10, 11, 12, 13, 14]));
     it("asyncForEach()", async () => {
