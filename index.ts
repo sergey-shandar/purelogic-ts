@@ -259,6 +259,10 @@ export namespace bag {
         return new Bag(<R>(visitor: Visitor<T, R>) => visitor.input());
     }
 
+    export function range(a: number, b: number): Bag<number> {
+        return one(null).flatMap(() => iterable.range(a, b));
+    }
+
     let bagCounter: number = 0;
 
     export class Join<A, B> {
