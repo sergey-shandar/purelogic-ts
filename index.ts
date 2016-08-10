@@ -661,9 +661,7 @@ export class AsyncMem extends Mem<Promise<iterable.I<any>>> {
                     b: optimized.Bag<B>,
                     func: iterable.ProductFunc<A, B, T>
                 ): Promise<iterable.I<T>> {
-                    const getA = await get(a);
-                    const getB = await get(b);
-                    return iterable.product(getA, getB, func);
+                    return iterable.product(await get(a), await get(b), func);
                 }
             }
             return n.implementation(new Visitor());
