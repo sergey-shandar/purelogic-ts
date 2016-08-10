@@ -1,4 +1,4 @@
-import { bag, asyncmem } from "../index";
+import { bag, asyncmem, iterable, immediate } from "../index";
 import * as chai from "chai";
 import { iterableEqual } from "./iterable-helper";
 
@@ -45,6 +45,34 @@ describe("namespace asyncmem", function() {
             const unknownBag = bag.input<string>();
             function getUnknownBag() { return asyncMem.get(unknownBag); }
             getUnknownBag.should.throw();
+        });
+        it("async", async () => {
+            // logic
+            const r = bag.range(0, 1000).reduce((a, b) => a + b);
+
+            // back-end
+            const asyncMem = new asyncmem.AsyncMem();
+
+            let stop = false;
+
+            async function calculate(): Promise<iterable.I<number>> {
+                const result = await asyncMem.get(r);
+                stop = true;
+                return result;
+            }
+
+            const p = calculate();
+
+            let x = 0;
+
+            while (!stop) {
+                await immediate();
+                ++x;
+            }
+
+            x.should.lessThan(2000);
+            x.should.greaterThan(500);
+            iterableEqual(await p, [(999 * 1000) / 2]);
         });
     });
 });

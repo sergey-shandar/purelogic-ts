@@ -3,6 +3,14 @@
   "version": "0.0.8",
   "description": "PureLogic for TypeScript",
   "main": "index.js",
+  "keywords": [
+    "mapreduce",
+    "bigdata",
+    "linq",
+    "dsl",
+    "edsl",
+    "typescript"
+  ],
   "scripts": {
     "prepublish": "tsc",
     "test": "tsc && tslint *.ts && istanbul cover node_modules/mocha/bin/_mocha && istanbul check-coverage",

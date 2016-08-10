@@ -31,6 +31,10 @@ export class CacheMap<T> {
     }
 }
 
+export function immediate(): Promise<void> {
+    return new Promise(resolve => setImmediate(resolve));
+}
+
 /**
  * Iterable utilities.
  */
@@ -171,6 +175,25 @@ export namespace iterable {
         }
         return stateless(result);
     }
+
+    export async function asyncForEach<T>(c: I<T>, f: (v: T) => void): Promise<void> {
+        for (const v of stateless(c)) {
+            f(v);
+            await immediate();
+        }
+    }
+
+    export async function asyncGroupBy<T>(
+        c: I<T>, key: KeyFunc<T>, reduce: ReduceFunc<T>): Promise<Map<T>> {
+
+        const result: iterable.Map<T> = {};
+        await asyncForEach(c, v => {
+            const k = key(v);
+            const old = result[k];
+            result[k] = old === undefined ? v : reduce(old, v);
+        });
+        return result;
+    }
 }
 
 /**
@@ -234,6 +257,10 @@ export namespace bag {
 
     export function input<T>(): Bag<T> {
         return new Bag(<R>(visitor: Visitor<T, R>) => visitor.input());
+    }
+
+    export function range(a: number, b: number): Bag<number> {
+        return one(null).flatMap(() => iterable.range(a, b));
     }
 
     let bagCounter: number = 0;
@@ -569,8 +596,8 @@ export namespace syncmem {
                         toKey: iterable.KeyFunc<T>,
                         reduce: iterable.ReduceFunc<T>
                     ): iterable.I<T> {
-                        return iterable.cache(iterable.values(iterable.groupBy(
-                            get(input), toKey, reduce)));
+                        return iterable.values(iterable.groupBy(
+                            get(input), toKey, reduce));
                     }
 
                     product<A, B>(
@@ -635,8 +662,7 @@ export namespace asyncmem {
                         reduce: iterable.ReduceFunc<T>
                     ): Promise<iterable.I<T>> {
                         const i = await get(input);
-                        return iterable.cache(
-                            iterable.values(iterable.groupBy(i, toKey, reduce)));
+                        return iterable.values(await iterable.asyncGroupBy(i, toKey, reduce));
                     }
 
                     async product<A, B>(
