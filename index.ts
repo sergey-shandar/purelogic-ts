@@ -538,14 +538,15 @@ export class InputError implements Error {
     }
 }
 
+export abstract class Mem<T> {
+    protected readonly _map = new CacheMap<T>();
+    protected readonly _dag: optimized.Dag = new optimized.Dag();
+}
+
 /**
  * Synchronous memory back-end.
  */
-export class SyncMem {
-
-    private readonly _map = new CacheMap<iterable.I<any>>();
-
-    private readonly _dag: optimized.Dag = new optimized.Dag();
+export class SyncMem extends Mem<iterable.I<any>> {
 
     set<T>(input: bag.Bag<T>, factory: iterable.I<T>): void {
         this._map.set(input.id, factory);
@@ -591,8 +592,7 @@ export class SyncMem {
                     toKey: iterable.KeyFunc<T>,
                     reduce: iterable.ReduceFunc<T>
                 ): iterable.I<T> {
-                    return iterable.values(iterable.groupBy(
-                        get(input), toKey, reduce));
+                    return iterable.values(iterable.groupBy(get(input), toKey, reduce));
                 }
 
                 product<A, B>(
@@ -606,11 +606,7 @@ export class SyncMem {
     }
 }
 
-export class AsyncMem {
-
-    private readonly _map = new CacheMap<Promise<iterable.I<any>>>();
-
-    private readonly _dag: optimized.Dag = new optimized.Dag();
+export class AsyncMem extends Mem<Promise<iterable.I<any>>> {
 
     set<T>(input: bag.Bag<T>, getArray: Promise<iterable.I<T>>): void {
         this._map.set(input.id, getArray);
