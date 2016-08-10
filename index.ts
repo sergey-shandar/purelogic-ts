@@ -457,7 +457,11 @@ export namespace optimized {
 
         constructor(
             public readonly id: string,
-            public readonly array: Link<T>[]) {}
+            public readonly links: Link<T>[]) {}
+
+        linksMap<R>(visitor: LinkVisitor<T, R>): R[] {
+            return this.links.map(link => link.implementation(visitor));
+        }
 
         groupBy(id: string, toKey: iterable.KeyFunc<T>, reduce: iterable.ReduceFunc<T>): Bag<T> {
             return new Node(
@@ -472,11 +476,11 @@ export namespace optimized {
         }
 
         flatMap<O>(id: string, func: iterable.FlatMapFunc<T, O>): Bag<O> {
-            return new Bag(id, this.array.map(link => link.flatMap(func)));
+            return new Bag(id, this.links.map(link => link.flatMap(func)));
         }
 
         disjointUnion(id: string, b: Bag<T>): Bag<T> {
-            const c = iterable.concat(this.array, b.array);
+            const c = iterable.concat(this.links, b.links);
             const g = iterable.groupBy(
                 c,
                 x => x.nodeId(),
@@ -565,14 +569,10 @@ export class SyncMem extends Mem<iterable.I<any>> {
     private _get<T>(o: optimized.Bag<T>): iterable.I<T> {
         const id = o.id;
         return this._map.get(id, () => {
-            const links = o.array
-                .map(link => link.implementation(<I>(value: optimized.LinkValue<T, I>) => {
-                    // NOTE: possible optimization:
-                    // if (f === flatMap.identity) { return nodeFunc; }
-                    const f = value.func;
-                    const nodeFunc = this._fromNode(value.node);
-                    return iterable.flatMap(nodeFunc, f);
-                }));
+            const links = o.linksMap(<I>(value: optimized.LinkValue<T, I>) =>
+                // NOTE: possible optimization:
+                // if (f === flatMap.identity) { return nodeFunc; }
+                iterable.flatMap(this._fromNode(value.node), value.func));
             // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
             return iterable.flatten(links);
         });
@@ -624,17 +624,14 @@ export class AsyncMem extends Mem<Promise<iterable.I<any>>> {
 
     private _get<T>(o: optimized.Bag<T>): Promise<iterable.I<T>> {
         const id = o.id;
-        return this._map.get(id, () => {
-            const linkPromises = o.array
-                .map(link => link.implementation(<I>(value: optimized.LinkValue<T, I>) => {
-                    // NOTE: possible optimization:
-                    // if (f === flatMap.identity) { return nodeFunc; }
-                    const f = value.func;
-                    return this._fromNode(value.node)
-                        .then(x => iterable.flatMap(x, f));
-                }));
+        return this._map.get(id, async () => {
+            const linkPromises = o.linksMap(async <I>(value: optimized.LinkValue<T, I>) => {
+                // NOTE: possible optimization:
+                // if (value.func === flatMap.identity) { return nodeFunc; }
+                return iterable.flatMap(await this._fromNode(value.node), value.func);
+            });
             // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
-            return Promise.all(linkPromises).then(iterable.flatten);
+            return iterable.flatten(await Promise.all(linkPromises));
         });
     }
 
@@ -646,7 +643,7 @@ export class AsyncMem extends Mem<Promise<iterable.I<any>>> {
 
             class Visitor implements optimized.NodeVisitor<T, Promise<iterable.I<T>>> {
 
-                input(): never { throw new InputError(id); }
+                input(): Promise<iterable.I<T>> { return Promise.reject(new InputError(id)); }
 
                 async one(value: T): Promise<iterable.I<T>> { return [value]; }
 
@@ -664,9 +661,7 @@ export class AsyncMem extends Mem<Promise<iterable.I<any>>> {
                     b: optimized.Bag<B>,
                     func: iterable.ProductFunc<A, B, T>
                 ): Promise<iterable.I<T>> {
-                    const getA = await get(a);
-                    const getB = await get(b);
-                    return iterable.product(getA, getB, func);
+                    return iterable.product(await get(a), await get(b), func);
                 }
             }
             return n.implementation(new Visitor());

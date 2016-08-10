@@ -43,8 +43,7 @@ describe("namespace asyncmem", function() {
                 ]);
 
             const unknownBag = bag.input<string>();
-            function getUnknownBag() { return asyncMem.get(unknownBag); }
-            getUnknownBag.should.throw();
+            await asyncMem.get(unknownBag).then(() => chai.assert("should throw"), () => {});
         });
         it("async", async () => {
             // logic
