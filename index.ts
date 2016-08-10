@@ -492,123 +492,117 @@ export namespace optimized {
     export function one<T>(id: string, value: T): Bag<T> {
         return new Node(id, <R>(visitor: NodeVisitor<T, R>) => visitor.one(value)).bag();
     }
-}
 
-/**
- * DAG
- */
-export namespace dag {
-
+    /**
+     * DAG
+     */
     export class Dag {
 
         private readonly _map = new CacheMap<any>();
 
-        get<T>(bag: bag.Bag<T>): optimized.Bag<T> {
-            const id = bag.id;
+        get<T>(b: bag.Bag<T>): Bag<T> {
+            const id = b.id;
             return this._map.get(id, () => {
                 const getOpimized = <I>(b: bag.Bag<I>) => this.get(b);
-                class Visitor implements bag.Visitor<T, optimized.Bag<T>> {
-                    flatMap<I>(value: bag.FlatMap<T, I>): optimized.Bag<T> {
+                class Visitor implements bag.Visitor<T, Bag<T>> {
+                    flatMap<I>(value: bag.FlatMap<T, I>): Bag<T> {
                         return getOpimized(value.input).flatMap(id, value.func);
                     }
-                    disjointUnion(value: bag.DisjointUnion<T>): optimized.Bag<T> {
+                    disjointUnion(value: bag.DisjointUnion<T>): Bag<T> {
                         return getOpimized(value.a).disjointUnion(id, getOpimized(value.b));
                     }
-                    one(value: T): optimized.Bag<T> {
+                    one(value: T): Bag<T> {
                         return optimized.one(id, value);
                     }
-                    input(): optimized.Bag<T> {
+                    input(): Bag<T> {
                         return optimized.input<T>(id);
                     }
-                    groupBy(value: bag.GroupBy<T>): optimized.Bag<T> {
+                    groupBy(value: bag.GroupBy<T>): Bag<T> {
                         return getOpimized(value.input).groupBy(id, value.toKey, value.reduce);
                     }
-                    product<A, B>(value: bag.Product<T, A, B>): optimized.Bag<T> {
+                    product<A, B>(value: bag.Product<T, A, B>): Bag<T> {
                         return getOpimized(value.a).product(id, getOpimized(value.b), value.func);
                     }
                 }
-                return bag.implementation(new Visitor());
+                return b.implementation(new Visitor());
             });
         }
+    }
+}
+
+export class InputError implements Error {
+    readonly name: string = "InputError";
+    readonly message: string;
+    constructor(public readonly bagId: string) {
+        this.message = `InputError: input bag ${bagId} is not defined`;
     }
 }
 
 /**
  * Synchronous memory back-end.
  */
-export namespace syncmem {
+export class SyncMem {
 
-    export class InputError implements Error {
-        readonly name: string = "InputError";
-        readonly message: string;
-        constructor(public readonly bagId: string) {
-            this.message = `InputError: input bag ${bagId} is not defined`;
-        }
+    private readonly _map = new CacheMap<iterable.I<any>>();
+
+    private readonly _dag: optimized.Dag = new optimized.Dag();
+
+    set<T>(input: bag.Bag<T>, factory: iterable.I<T>): void {
+        this._map.set(input.id, factory);
     }
 
-    export class SyncMem {
+    get<T>(b: bag.Bag<T>): iterable.I<T> {
+        return this._get(this._dag.get(b));
+    }
 
-        private readonly _map = new CacheMap<iterable.I<any>>();
+    private _get<T>(o: optimized.Bag<T>): iterable.I<T> {
+        const id = o.id;
+        return this._map.get(id, () => {
+            const links = o.array
+                .map(link => link.implementation(<I>(value: optimized.LinkValue<T, I>) => {
+                    // NOTE: possible optimization:
+                    // if (f === flatMap.identity) { return nodeFunc; }
+                    const f = value.func;
+                    const nodeFunc = this._fromNode(value.node);
+                    return iterable.flatMap(nodeFunc, f);
+                }));
+            // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
+            return iterable.flatten(links);
+        });
+    }
 
-        private readonly _dag: dag.Dag = new dag.Dag();
+    private _fromNode<T>(n: optimized.Node<T>): iterable.I<T> {
+        const id = n.id;
+        const map = this._map;
+        return map.get(id, () => {
+            const get = <I>(b: optimized.Bag<I>) => this._get(b);
 
-        set<T>(input: bag.Bag<T>, factory: iterable.I<T>): void {
-           this._map.set(input.id, factory);
-        }
+            class Visitor implements optimized.NodeVisitor<T, iterable.I<T>> {
 
-        get<T>(b: bag.Bag<T>): iterable.I<T> {
-            return this._get(this._dag.get(b));
-        }
+                /**
+                 * when input is not defined yet.
+                 */
+                input(): never { throw new InputError(id); }
 
-        private _get<T>(o: optimized.Bag<T>): iterable.I<T> {
-            const id = o.id;
-            return this._map.get(id, () => {
-                const links = o.array
-                    .map(link => link.implementation(<I>(value: optimized.LinkValue<T, I>) => {
-                        // NOTE: possible optimization:
-                        // if (f === flatMap.identity) { return nodeFunc; }
-                        const f = value.func;
-                        const nodeFunc = this._fromNode(value.node);
-                        return iterable.flatMap(nodeFunc, f);
-                    }));
-                // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
-                return iterable.flatten(links);
-            });
-        }
+                one(value: T): iterable.I<T> { return [value]; }
 
-        private _fromNode<T>(n: optimized.Node<T>): iterable.I<T> {
-            const id = n.id;
-            const map = this._map;
-            return map.get(id, () => {
-                const get = <I>(b: optimized.Bag<I>) => this._get(b);
-
-                class Visitor implements optimized.NodeVisitor<T, iterable.I<T>> {
-
-                    /**
-                     * when input is not defined yet.
-                     */
-                    input(): never { throw new InputError(id); }
-
-                    one(value: T): iterable.I<T> { return [value]; }
-
-                    groupBy(
-                        input: optimized.Bag<T>,
-                        toKey: iterable.KeyFunc<T>,
-                        reduce: iterable.ReduceFunc<T>
-                    ): iterable.I<T> {
-                        return iterable.values(iterable.groupBy(
-                            get(input), toKey, reduce));
-                    }
-
-                    product<A, B>(
-                        a: optimized.Bag<A>, b: optimized.Bag<B>, func: iterable.ProductFunc<A, B, T>
-                    ): iterable.I<T> {
-                        return iterable.product(get(a), get(b), func);
-                    }
+                groupBy(
+                    input: optimized.Bag<T>,
+                    toKey: iterable.KeyFunc<T>,
+                    reduce: iterable.ReduceFunc<T>
+                ): iterable.I<T> {
+                    return iterable.values(iterable.groupBy(
+                        get(input), toKey, reduce));
                 }
-                return n.implementation(new Visitor());
-            });
-        }
+
+                product<A, B>(
+                    a: optimized.Bag<A>, b: optimized.Bag<B>, func: iterable.ProductFunc<A, B, T>
+                ): iterable.I<T> {
+                    return iterable.product(get(a), get(b), func);
+                }
+            }
+            return n.implementation(new Visitor());
+        });
     }
 }
 
@@ -618,7 +612,7 @@ export namespace asyncmem {
 
         private readonly _map = new CacheMap<Promise<iterable.I<any>>>();
 
-        private readonly _dag: dag.Dag = new dag.Dag();
+        private readonly _dag: optimized.Dag = new optimized.Dag();
 
         set<T>(input: bag.Bag<T>, getArray: Promise<iterable.I<T>>): void {
            this._map.set(input.id, getArray);
@@ -652,7 +646,7 @@ export namespace asyncmem {
 
                 class Visitor implements optimized.NodeVisitor<T, Promise<iterable.I<T>>> {
 
-                    input(): never { throw new syncmem.InputError(id); }
+                    input(): never { throw new InputError(id); }
 
                     async one(value: T): Promise<iterable.I<T>> { return [value]; }
 
