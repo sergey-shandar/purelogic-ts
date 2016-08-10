@@ -176,23 +176,25 @@ export namespace iterable {
         return stateless(result);
     }
 
-    export async function asyncForEach<T>(c: I<T>, f: (v: T) => void): Promise<void> {
-        for (const v of stateless(c)) {
-            f(v);
-            await immediate();
+    export namespace async {
+        export async function forEach<T>(c: I<T>, f: (v: T) => void): Promise<void> {
+            for (const v of stateless(c)) {
+                f(v);
+                await immediate();
+            }
         }
-    }
 
-    export async function asyncGroupBy<T>(
-        c: I<T>, key: KeyFunc<T>, reduce: ReduceFunc<T>): Promise<Map<T>> {
+        export async function groupBy<T>(
+            c: I<T>, key: KeyFunc<T>, reduce: ReduceFunc<T>): Promise<Map<T>> {
 
-        const result: iterable.Map<T> = {};
-        await asyncForEach(c, v => {
-            const k = key(v);
-            const old = result[k];
-            result[k] = old === undefined ? v : reduce(old, v);
-        });
-        return result;
+            const result: iterable.Map<T> = {};
+            await forEach(c, v => {
+                const k = key(v);
+                const old = result[k];
+                result[k] = old === undefined ? v : reduce(old, v);
+            });
+            return result;
+        }
     }
 }
 
@@ -650,7 +652,7 @@ export class AsyncMem extends Mem<Promise<iterable.I<any>>> {
                     reduce: iterable.ReduceFunc<T>
                 ): Promise<iterable.I<T>> {
                     const i = await get(input);
-                    return iterable.values(await iterable.asyncGroupBy(i, toKey, reduce));
+                    return iterable.values(await iterable.async.groupBy(i, toKey, reduce));
                 }
 
                 async product<A, B>(
