@@ -606,71 +606,68 @@ export class SyncMem {
     }
 }
 
-export namespace asyncmem {
+export class AsyncMem {
 
-    export class AsyncMem {
+    private readonly _map = new CacheMap<Promise<iterable.I<any>>>();
 
-        private readonly _map = new CacheMap<Promise<iterable.I<any>>>();
+    private readonly _dag: optimized.Dag = new optimized.Dag();
 
-        private readonly _dag: optimized.Dag = new optimized.Dag();
+    set<T>(input: bag.Bag<T>, getArray: Promise<iterable.I<T>>): void {
+        this._map.set(input.id, getArray);
+    }
 
-        set<T>(input: bag.Bag<T>, getArray: Promise<iterable.I<T>>): void {
-           this._map.set(input.id, getArray);
-        }
+    get<T>(b: bag.Bag<T>): Promise<iterable.I<T>> {
+        return this._get(this._dag.get(b));
+    }
 
-        get<T>(b: bag.Bag<T>): Promise<iterable.I<T>> {
-            return this._get(this._dag.get(b));
-        }
+    private _get<T>(o: optimized.Bag<T>): Promise<iterable.I<T>> {
+        const id = o.id;
+        return this._map.get(id, () => {
+            const linkPromises = o.array
+                .map(link => link.implementation(<I>(value: optimized.LinkValue<T, I>) => {
+                    // NOTE: possible optimization:
+                    // if (f === flatMap.identity) { return nodeFunc; }
+                    const f = value.func;
+                    return this._fromNode(value.node)
+                        .then(x => iterable.flatMap(x, f));
+                }));
+            // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
+            return Promise.all(linkPromises).then(iterable.flatten);
+        });
+    }
 
-        private _get<T>(o: optimized.Bag<T>): Promise<iterable.I<T>> {
-            const id = o.id;
-            return this._map.get(id, () => {
-                const linkPromises = o.array
-                    .map(link => link.implementation(<I>(value: optimized.LinkValue<T, I>) => {
-                        // NOTE: possible optimization:
-                        // if (f === flatMap.identity) { return nodeFunc; }
-                        const f = value.func;
-                        return this._fromNode(value.node)
-                            .then(x => iterable.flatMap(x, f));
-                    }));
-                // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
-                return Promise.all(linkPromises).then(iterable.flatten);
-            });
-        }
+    private _fromNode<T>(n: optimized.Node<T>): Promise<iterable.I<T>> {
+        const id = n.id;
+        const map = this._map;
+        return map.get(id, () => {
+            const get = <I>(b: optimized.Bag<I>) => this._get(b);
 
-        private _fromNode<T>(n: optimized.Node<T>): Promise<iterable.I<T>> {
-            const id = n.id;
-            const map = this._map;
-            return map.get(id, () => {
-                const get = <I>(b: optimized.Bag<I>) => this._get(b);
+            class Visitor implements optimized.NodeVisitor<T, Promise<iterable.I<T>>> {
 
-                class Visitor implements optimized.NodeVisitor<T, Promise<iterable.I<T>>> {
+                input(): never { throw new InputError(id); }
 
-                    input(): never { throw new InputError(id); }
+                async one(value: T): Promise<iterable.I<T>> { return [value]; }
 
-                    async one(value: T): Promise<iterable.I<T>> { return [value]; }
-
-                    async groupBy(
-                        input: optimized.Bag<T>,
-                        toKey: iterable.KeyFunc<T>,
-                        reduce: iterable.ReduceFunc<T>
-                    ): Promise<iterable.I<T>> {
-                        const i = await get(input);
-                        return iterable.values(await iterable.asyncGroupBy(i, toKey, reduce));
-                    }
-
-                    async product<A, B>(
-                        a: optimized.Bag<A>,
-                        b: optimized.Bag<B>,
-                        func: iterable.ProductFunc<A, B, T>
-                    ): Promise<iterable.I<T>> {
-                        const getA = await get(a);
-                        const getB = await get(b);
-                        return iterable.product(getA, getB, func);
-                    }
+                async groupBy(
+                    input: optimized.Bag<T>,
+                    toKey: iterable.KeyFunc<T>,
+                    reduce: iterable.ReduceFunc<T>
+                ): Promise<iterable.I<T>> {
+                    const i = await get(input);
+                    return iterable.values(await iterable.asyncGroupBy(i, toKey, reduce));
                 }
-                return n.implementation(new Visitor());
-            });
-        }
+
+                async product<A, B>(
+                    a: optimized.Bag<A>,
+                    b: optimized.Bag<B>,
+                    func: iterable.ProductFunc<A, B, T>
+                ): Promise<iterable.I<T>> {
+                    const getA = await get(a);
+                    const getB = await get(b);
+                    return iterable.product(getA, getB, func);
+                }
+            }
+            return n.implementation(new Visitor());
+        });
     }
 }
