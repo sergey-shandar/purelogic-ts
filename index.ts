@@ -625,25 +625,9 @@ export class AsyncMem extends Mem<Promise<iterable.I<any>>> {
     private _get<T>(o: optimized.Bag<T>): Promise<iterable.I<T>> {
         const id = o.id;
         return this._map.get(id, async () => {
-            /*
-                        const linkPromises = o.linksMap((value) => __awaiter(this, void 0, void 0, function* () {
-                // NOTE: possible optimization:
-                // if (value.func === flatMap.identity) { return nodeFunc; }
-                return iterable.flatMap(yield this._fromNode(value.node), value.func);
-            }));
-
-            const linkPromises = o.linksMap((value) => __awaiter(this, void 0, void 0, function* () {
-                // NOTE: possible optimization:
-                // if (value.func === flatMap.identity) { return nodeFunc; }
-                return
-                // NOTE: possible optimization:
-                // if (value.func === flatMap.identity) { return nodeFunc; }
-                iterable.flatMap(yield this._fromNode(value.node), value.func);
-            }));
-            */
+            // NOTE: possible optimization:
+            // if (value.func === flatMap.identity) { return nodeFunc; }
             const linkPromises = o.linksMap(async <I>(value: optimized.LinkValue<T, I>) =>
-                // NOTE: possible optimization:
-                // if (value.func === flatMap.identity) { return nodeFunc; }
                 iterable.flatMap(await this._fromNode(value.node), value.func));
             // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
             return iterable.flatten(await Promise.all(linkPromises));
