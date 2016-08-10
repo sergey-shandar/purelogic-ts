@@ -572,9 +572,8 @@ export class SyncMem extends Mem<iterable.I<any>> {
             const links = o.linksMap(<I>(value: optimized.LinkValue<T, I>) => {
                 // NOTE: possible optimization:
                 // if (f === flatMap.identity) { return nodeFunc; }
-                const f = value.func;
                 const nodeFunc = this._fromNode(value.node);
-                return iterable.flatMap(nodeFunc, f);
+                return iterable.flatMap(nodeFunc, value.func);
             });
             // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
             return iterable.flatten(links);
@@ -628,11 +627,10 @@ export class AsyncMem extends Mem<Promise<iterable.I<any>>> {
     private _get<T>(o: optimized.Bag<T>): Promise<iterable.I<T>> {
         const id = o.id;
         return this._map.get(id, () => {
-            const linkPromises = o.linksMap(<I>(value: optimized.LinkValue<T, I>) => {
+            const linkPromises = o.linksMap(async <I>(value: optimized.LinkValue<T, I>) => {
                 // NOTE: possible optimization:
                 // if (f === flatMap.identity) { return nodeFunc; }
-                const f = value.func;
-                return this._fromNode(value.node).then(x => iterable.flatMap(x, f));
+                return iterable.flatMap(await this._fromNode(value.node), value.func);
             });
             // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
             return Promise.all(linkPromises).then(iterable.flatten);
@@ -647,7 +645,7 @@ export class AsyncMem extends Mem<Promise<iterable.I<any>>> {
 
             class Visitor implements optimized.NodeVisitor<T, Promise<iterable.I<T>>> {
 
-                input(): never { throw new InputError(id); }
+                input(): Promise<iterable.I<T>> { return Promise.reject(new InputError(id)); }
 
                 async one(value: T): Promise<iterable.I<T>> { return [value]; }
 
