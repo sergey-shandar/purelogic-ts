@@ -24,7 +24,7 @@ describe("namespace optimized", function() {
     it("input()", () => {
         optimized.input("7").id.should.equal("7");
         const b = optimized.input("5");
-        b.array[0].implementation(<I>(link: optimized.LinkValue<number, I>) => {
+        b.links[0].implementation(<I>(link: optimized.LinkValue<number, I>) => {
             check(link.node, {
                 input: () => null
             });
@@ -32,7 +32,7 @@ describe("namespace optimized", function() {
 
     });
     it("one()", () => {
-        optimized.one("0", "Hello!").array[0].implementation(
+        optimized.one("0", "Hello!").links[0].implementation(
             <I>(link: optimized.LinkValue<string, I>) => {
                 check(link.node, {
                     one: s => s.should.equal("Hello!")
@@ -57,8 +57,8 @@ describe("namespace optimized", function() {
                 <R>(visitor: optimized.NodeVisitor<string, R>) => visitor.one("Hello world!"));
             const bag = a.bag();
             bag.id.should.equal("42");
-            bag.array.length.should.equal(1);
-            bag.array[0].implementation(<I>(x: optimized.LinkValue<string, I>) => {
+            bag.links.length.should.equal(1);
+            bag.links[0].implementation(<I>(x: optimized.LinkValue<string, I>) => {
                 x.node.should.equal(a);
                 x.func.should.equal(iterable.flatMapIdentity);
             });
@@ -66,7 +66,7 @@ describe("namespace optimized", function() {
     });
     describe("class Link", function() {
         it("nodeId()", () => {
-            optimized.one("42", "hello world").array[0].nodeId().should.equal("42");
+            optimized.one("42", "hello world").links[0].nodeId().should.equal("42");
         });
         it("flatMap()", () => {
             const a = new optimized.Node(
@@ -101,14 +101,14 @@ describe("namespace optimized", function() {
             const x = [node.link(iterable.flatMapIdentity)];
             const bag = new optimized.Bag("43", x);
             bag.id.should.equal("43");
-            bag.array.should.equal(x);
+            bag.links.should.equal(x);
         });
         it("groupBy()", () => {
             const x = optimized.one("0", { a: 4, b: "hello" });
             const toKey = (v: {a: number, b: string}) => v.a.toString();
             const reduce = <T>(a: T, _: T) => a;
             const bag = x.groupBy("1", toKey, reduce);
-            bag.array[0].implementation(
+            bag.links[0].implementation(
                 <I>(link: optimized.LinkValue<{a: number, b: string}, I>) => {
                     check(
                         link.node,
@@ -126,7 +126,7 @@ describe("namespace optimized", function() {
             const b = optimized.one("1", "world");
             const r = (x: number, y: string) => [{ a: x, b: y}];
             const p = a.product("2", b, r);
-            p.array[0].implementation(<I>(x: optimized.LinkValue<{a: number, b: string}, I>) => {
+            p.links[0].implementation(<I>(x: optimized.LinkValue<{a: number, b: string}, I>) => {
                 check(x.node, {
                     product: (ax: any, bx: any, rx: any): void => {
                         ax.should.equal(a);
@@ -140,7 +140,7 @@ describe("namespace optimized", function() {
             const a = optimized.one("123", 9);
             const f = (x: number) => [x * 2];
             const r = a.flatMap("1", f);
-            r.array[0].implementation(<I>(b: optimized.LinkValue<number, I>) => {
+            r.links[0].implementation(<I>(b: optimized.LinkValue<number, I>) => {
                 b.node.id.should.equal("123");
                 b.func.should.equal(f);
             });
@@ -149,10 +149,10 @@ describe("namespace optimized", function() {
             const a = optimized.one("101", 1);
             const b = optimized.one("1", 2);
             const d = a.disjointUnion("2", b);
-            d.array.should.deep.equal([b.array[0], a.array[0]]);
+            d.links.should.deep.equal([b.links[0], a.links[0]]);
             const d2 = a.disjointUnion("3", a);
-            d2.array.length.should.equal(1);
-            d2.array[0].implementation((x: optimized.LinkValue<number, number>) => {
+            d2.links.length.should.equal(1);
+            d2.links[0].implementation((x: optimized.LinkValue<number, number>) => {
                 x.node.id.should.equal("101");
                 iterableEqual(x.func(10), [10, 10]);
             });
