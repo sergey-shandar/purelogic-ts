@@ -569,12 +569,10 @@ export class SyncMem extends Mem<iterable.I<any>> {
     private _get<T>(o: optimized.Bag<T>): iterable.I<T> {
         const id = o.id;
         return this._map.get(id, () => {
-            const links = o.linksMap(<I>(value: optimized.LinkValue<T, I>) => {
+            const links = o.linksMap(<I>(value: optimized.LinkValue<T, I>) =>
                 // NOTE: possible optimization:
                 // if (f === flatMap.identity) { return nodeFunc; }
-                const nodeFunc = this._fromNode(value.node);
-                return iterable.flatMap(nodeFunc, value.func);
-            });
+                iterable.flatMap(this._fromNode(value.node), value.func));
             // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
             return iterable.flatten(links);
         });
