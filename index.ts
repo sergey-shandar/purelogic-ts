@@ -624,14 +624,14 @@ export class AsyncMem extends Mem<Promise<iterable.I<any>>> {
 
     private _get<T>(o: optimized.Bag<T>): Promise<iterable.I<T>> {
         const id = o.id;
-        return this._map.get(id, () => {
+        return this._map.get(id, async () => {
             const linkPromises = o.linksMap(async <I>(value: optimized.LinkValue<T, I>) => {
                 // NOTE: possible optimization:
-                // if (f === flatMap.identity) { return nodeFunc; }
+                // if (value.func === flatMap.identity) { return nodeFunc; }
                 return iterable.flatMap(await this._fromNode(value.node), value.func);
             });
             // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
-            return Promise.all(linkPromises).then(iterable.flatten);
+            return iterable.flatten(await Promise.all(linkPromises));
         });
     }
 
