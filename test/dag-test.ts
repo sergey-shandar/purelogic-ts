@@ -1,13 +1,13 @@
 import "mocha";
 import * as chai from "chai";
-import { bag, dag } from "../index";
+import { bag, optimized } from "../index";
 
 chai.should();
 
-describe("namespac dag", function() {
+describe("namespac optimized", function() {
     describe("class Dag", function() {
         it("get()", () => {
-            const d = new dag.Dag();
+            const d = new optimized.Dag();
             const one = bag.one("Hello world!");
             const xOne = d.get(one);
             xOne.array.length.should.equal(1);

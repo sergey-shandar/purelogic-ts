@@ -56,13 +56,15 @@ describe("namespace iterable", function () {
         counter.should.equal(1);
     });
     it("range()", () => iterableEqual(iterable.range(10, 15), [10, 11, 12, 13, 14]));
-    it("asyncForEach()", async () => {
-        let result = 0;
-        await iterable.asyncForEach(iterable.range(0, 100), v => result += v);
-        result.should.equal(99 * 100 / 2);
-    });
-    it("asyncGroupBy()", async () => {
-        const m = await iterable.asyncGroupBy([ "a", "b", "x", "b" ], k => k, (a, b) => a + b);
-        m.should.deep.equal({ "a": "a", "b": "bb", "x": "x" });
+    describe("namespace async", function() {
+        it("forEach()", async () => {
+            let result = 0;
+            await iterable.async.forEach(iterable.range(0, 100), v => result += v);
+            result.should.equal(99 * 100 / 2);
+        });
+        it("groupBy()", async () => {
+            const m = await iterable.async.groupBy([ "a", "b", "x", "b" ], k => k, (a, b) => a + b);
+            m.should.deep.equal({ "a": "a", "b": "bb", "x": "x" });
+        });
     });
 });

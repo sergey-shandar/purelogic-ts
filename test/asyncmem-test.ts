@@ -1,4 +1,4 @@
-import { bag, asyncmem, iterable, immediate } from "../index";
+import { bag, AsyncMem, iterable, immediate } from "../index";
 import * as chai from "chai";
 import { iterableEqual } from "./iterable-helper";
 
@@ -7,7 +7,7 @@ chai.should();
 describe("namespace asyncmem", function() {
     describe("class AsyncMem", function() {
         it("set()", async () => {
-            const asyncMem = new asyncmem.AsyncMem();
+            const asyncMem = new AsyncMem();
             const input = bag.input<number>();
             const f = Promise.resolve([123]);
             asyncMem.set(input, f);
@@ -19,7 +19,7 @@ describe("namespace asyncmem", function() {
                 [123, 246, 369]);
         });
         it("get()", async () => {
-            const asyncMem = new asyncmem.AsyncMem();
+            const asyncMem = new AsyncMem();
             const r = bag.one("Hello world!");
 
             const a = bag.one(["Hello world!", "42", "42"]).flatMap(x => x);
@@ -51,7 +51,7 @@ describe("namespace asyncmem", function() {
             const r = bag.range(0, 1000).reduce((a, b) => a + b);
 
             // back-end
-            const asyncMem = new asyncmem.AsyncMem();
+            const asyncMem = new AsyncMem();
 
             let stop = false;
 
