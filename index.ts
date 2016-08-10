@@ -124,7 +124,7 @@ export namespace iterable {
         return flatMap(c, v => v);
     }
 
-    export function forEach<T>(c: I<T>, f: (v: T) => void) {
+    export function forEach<T>(c: I<T>, f: (v: T) => void): void {
         for (const v of stateless(c)) {
             f(v);
         }
@@ -153,14 +153,22 @@ export namespace iterable {
         return map(keys(m), k => m[k]);
     }
 
+    class GroupBy<T> {
+        readonly map: Map<T> = {};
+        constructor(
+            private readonly _key: KeyFunc<T>,
+            private readonly _reduce: ReduceFunc<T>) {}
+        add(v: T): void {
+            const k = this._key(v);
+            const old = this.map[k];
+            this.map[k] = old === undefined ? v : this._reduce(old, v);
+        }
+    }
+
     export function groupBy<T>(c: I<T>, key: KeyFunc<T>, reduce: ReduceFunc<T>): Map<T> {
-        const result: Map<T> = {};
-        forEach(c, v => {
-            const k = key(v);
-            const old = result[k];
-            result[k] = old === undefined ? v : reduce(old, v);
-        });
-        return result;
+        const result = new GroupBy(key, reduce);
+        forEach(c, v => result.add(v));
+        return result.map;
     }
 
     export function product<A, B, R>(a: I<A>, b: I<B>, f: ProductFunc<A, B, R>): I<R> {
@@ -187,13 +195,9 @@ export namespace iterable {
         export async function groupBy<T>(
             c: I<T>, key: KeyFunc<T>, reduce: ReduceFunc<T>): Promise<Map<T>> {
 
-            const result: iterable.Map<T> = {};
-            await forEach(c, v => {
-                const k = key(v);
-                const old = result[k];
-                result[k] = old === undefined ? v : reduce(old, v);
-            });
-            return result;
+            const result = new GroupBy<T>(key, reduce);
+            await forEach(c, v => result.add(v));
+            return result.map;
         }
     }
 }
