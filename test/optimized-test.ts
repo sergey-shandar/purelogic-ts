@@ -1,6 +1,7 @@
 import "mocha";
 import * as chai from "chai";
-import { iterable, optimized } from "../index";
+import { optimized } from "../index";
+import * as iterable from "iterable-ts";
 import { iterableEqual } from "./iterable-helper";
 
 chai.should();

@@ -1,5 +1,5 @@
 import * as chai from "chai";
-import { iterable } from "../index";
+import * as iterable from "iterable-ts";
 
 chai.should();
 

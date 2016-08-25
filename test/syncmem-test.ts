@@ -1,4 +1,5 @@
-import { bag, SyncMem, iterable } from "../index";
+import { bag, SyncMem } from "../index";
+import * as iterable from "iterable-ts";
 import * as chai from "chai";
 import { iterableEqual } from "./iterable-helper";
 
