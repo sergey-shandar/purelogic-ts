@@ -1,6 +1,7 @@
-import { bag, AsyncMem, iterable, immediate } from "../index";
+import { bag, AsyncMem } from "../index";
 import * as chai from "chai";
 import { iterableEqual } from "./iterable-helper";
+import * as iterable from "iterable-ts";
 
 chai.should();
 
@@ -65,7 +66,7 @@ describe("namespace asyncmem", function() {
             let x = 0;
 
             while (!stop) {
-                await immediate();
+                await iterable.immediate();
                 ++x;
             }
 
