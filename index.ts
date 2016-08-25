@@ -667,3 +667,28 @@ export class AsyncMem extends Mem<Promise<iterable.I<any>>> {
         });
     }
 }
+
+export type Callback<T> = <T>(add: iterable.I<T>, del: iterable.I<T>) => void;
+
+export class Subscription<T> {
+    private _callbacks = new Set<Callback<T>>();
+
+    subscribe(callback: Callback<T>) {
+        this._callbacks.add(callback);
+    }
+
+    unsubscribe(callback: Callback<T>) {
+        this._callbacks.delete(callback);
+    }
+
+    call(add: iterable.I<T>, del: iterable.I<T>) {
+        this._callbacks.forEach(callback => callback(add, del));
+    }
+}
+
+export class React extends Mem<Subscription<any>> {
+
+    get<T>(b: bag.Bag<T>): Subscription<T> {
+        return this._map.get(b.id, () => new Subscription<T>());
+    }
+}
