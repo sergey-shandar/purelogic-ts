@@ -42,7 +42,7 @@ See [lodash](https://lodash.com/docs) and [underscore](http://underscorejs.org/)
 
 ## Required
 
-- [Node.js](https://nodejs.org/en/) 6.3.0 or higher
+- [Node.js](https://nodejs.org/en/) 6.4.0 or higher
 
 ## Optional
 
@@ -56,7 +56,7 @@ See [lodash](https://lodash.com/docs) and [underscore](http://underscorejs.org/)
 
 ## Cloud9
 
-Run `nvm install 6.3.0 && nvm use 6.3.0` in [Cloud9](https://c9.io) workspace.
+Run `nvm install 6.4.0 && nvm use 6.4.0` in [Cloud9](https://c9.io) workspace.
 
 ## Conventions And Rules
 
