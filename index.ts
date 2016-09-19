@@ -135,15 +135,15 @@ export namespace bag {
         /**
          * LINQ: Select
          */
-        map<O>(func: (value: T) => O): Bag<O> {
+        map<O>(func: iterable.MapFunc<T, O>): Bag<O> {
             return this.flatMap(value => [func(value)]);
         }
 
         /**
          * LINQ: Where
          */
-        filter(func: (value: T) => boolean): Bag<T> {
-            return this.flatMap(value => func(value) ? [value] : []);
+        filter(func: iterable.FilterFunc<T>): Bag<T> {
+            return this.flatMap(iterable.filterFuncToFlatMapFunc(func));
         }
 
         compact(): Bag<T> {
