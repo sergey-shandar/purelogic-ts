@@ -43,7 +43,7 @@
     "typescript": "^2.0.0"
   },
   "dependencies": {
-    "iterable-ts": "0.0.0",
+    "iterable-ts": "0.0.1",
     "ts-helpers": "^1.1.1"
   }
 }

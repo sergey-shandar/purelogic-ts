@@ -8,12 +8,6 @@ PureLogic-TS is an
 [![npm version](https://badge.fury.io/js/purelogic-ts.svg)](https://badge.fury.io/js/purelogic-ts)
 [![Build Status](https://travis-ci.org/sergey-shandar/purelogic-ts.svg?branch=master)](https://travis-ci.org/sergey-shandar/purelogic-ts)
 
-## Iterable Type
-
-```ts
-type I<T> = Stateless<T> | () => Iterable<T> | T[];
-```
-
 ## Bag Types
 
 - Input
