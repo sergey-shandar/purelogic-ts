@@ -19,7 +19,7 @@ PureLogic-TS is an
 
 ## Bag Methods
 
-See [lodash](https://lodash.com/docs) and [underscore](http://underscorejs.org/).
+See [lazy.js](http://danieltao.com/lazy.js/docs/), [lodash](https://lodash.com/docs) and [underscore](http://underscorejs.org/).
 
 ## Back-ends
 
