@@ -4,5 +4,5 @@ import * as iterable from "iterable-ts";
 chai.should();
 
 export function iterableEqual<T>(a: iterable.I<T>, b: iterable.I<T>) {
-    iterable.toArray(a).should.deep.equal(iterable.toArray(b));
+    iterable.sequence(a).toArray().should.deep.equal(iterable.sequence(b).toArray());
 }

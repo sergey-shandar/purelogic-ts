@@ -54,8 +54,8 @@ describe("class SyncMem", function() {
 
         const m = new SyncMem();
 
-        iterable.toArray(m.get(r)).should.deep.equal([201]);
-        iterable.toArray(m.get(r)).should.deep.equal([201]);
+        iterable.sequence(m.get(r)).toArray().should.deep.equal([201]);
+        iterable.sequence(m.get(r)).toArray().should.deep.equal([201]);
 
         counter.should.equal(1);
     });

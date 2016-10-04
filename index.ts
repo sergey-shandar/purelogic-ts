@@ -234,7 +234,7 @@ export namespace optimized {
     export class LinkValue<T, I> {
         constructor(
             public readonly node: Node<I>,
-            public readonly func: iterable.FlatMapFunc<I, T>) {}
+            readonly func: iterable.FlatMapFunc<I, T>) {}
     }
 
     export type LinkVisitor<T, R> = <I>(value: LinkValue<T, I>) => R;
@@ -254,7 +254,9 @@ export namespace optimized {
             function visitor<I>(x: LinkValue<T, I>): Link<O> {
                 const f = x.func;
                 const newFunc = f !== iterable.flatMapIdentity
-                    ? (value: I) => iterable.toArray(iterable.flatMap(f(value), func))
+                    ? (value: I) => iterable.sequence(f(value))
+                        .flatMap(func)
+                        .toArray()
                     : <iterable.FlatMapFunc<I, O>> <any> func;
                 return x.node.link(newFunc);
             }
@@ -265,7 +267,7 @@ export namespace optimized {
             function visitor<I>(link: LinkValue<T, I>): Link<T> {
                 const f = link.func;
                 const fNew = getFunc<I>();
-                return link.node.link(i => iterable.concat(f(i), fNew(i)));
+                return link.node.link(i => iterable.sequence(f(i)).concat(fNew(i)));
             }
             return this.implementation(visitor);
         }
@@ -298,9 +300,8 @@ export namespace optimized {
         }
 
         disjointUnion(id: string, b: Bag<T>): Bag<T> {
-            const c = iterable.concat(this.links, b.links);
-            const g = iterable.groupBy(
-                c,
+            const c = iterable.sequence(this.links).concat(b.links);
+            const g = c.groupBy(
                 x => x.nodeId(),
                 (x, y) => {
                     function visitor<B>(v: LinkValue<T, B>): Link<T> {
@@ -309,7 +310,7 @@ export namespace optimized {
                     }
                     return y.implementation(visitor);
                 });
-            return new Bag(id, iterable.toArray(iterable.values(g)));
+            return new Bag(id, iterable.values(g).toArray());
         }
     }
 
@@ -390,7 +391,9 @@ export class SyncMem extends Mem<iterable.I<any>> {
             // NOTE: possible optimization:
             // if (value.func === flatMap.identity) { return nodeFunc; }
             const links = o.linksMap(<I>(value: optimized.LinkValue<T, I>) =>
-                iterable.flatMap(this._fromNode(value.node), value.func));
+                iterable
+                    .sequence(this._fromNode(value.node))
+                    .flatMap(value.func));
             // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
             return iterable.flatten(links);
         });
@@ -416,13 +419,13 @@ export class SyncMem extends Mem<iterable.I<any>> {
                     toKey: iterable.KeyFunc<T>,
                     reduce: iterable.ReduceFunc<T>
                 ): iterable.I<T> {
-                    return iterable.values(iterable.groupBy(get(input), toKey, reduce));
+                    return iterable.values(iterable.sequence(get(input)).groupBy(toKey, reduce));
                 }
 
                 product<A, B>(
                     a: optimized.Bag<A>, b: optimized.Bag<B>, func: iterable.ProductFunc<A, B, T>
                 ): iterable.I<T> {
-                    return iterable.product(get(a), get(b), func);
+                    return iterable.sequence(get(a)).product(get(b), func);
                 }
             }
             return n.implementation(new Visitor());
@@ -446,7 +449,7 @@ export class AsyncMem extends Mem<Promise<iterable.I<any>>> {
             // NOTE: possible optimization:
             // if (value.func === flatMap.identity) { return nodeFunc; }
             const linkPromises = o.linksMap(async <I>(value: optimized.LinkValue<T, I>) =>
-                iterable.flatMap(await this._fromNode(value.node), value.func));
+                iterable.sequence(await this._fromNode(value.node)).flatMap(value.func));
             // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
             return iterable.flatten(await Promise.all(linkPromises));
         });
@@ -470,7 +473,7 @@ export class AsyncMem extends Mem<Promise<iterable.I<any>>> {
                     reduce: iterable.ReduceFunc<T>
                 ): Promise<iterable.I<T>> {
                     const i = await get(input);
-                    return iterable.values(await iterable.async.groupBy(i, toKey, reduce));
+                    return iterable.values(await iterable.sequence(i).asyncGroupBy(toKey, reduce));
                 }
 
                 async product<A, B>(
@@ -478,7 +481,7 @@ export class AsyncMem extends Mem<Promise<iterable.I<any>>> {
                     b: optimized.Bag<B>,
                     func: iterable.ProductFunc<A, B, T>
                 ): Promise<iterable.I<T>> {
-                    return iterable.product(await get(a), await get(b), func);
+                    return iterable.sequence(await get(a)).product(await get(b), func);
                 }
             }
             return n.implementation(new Visitor());
