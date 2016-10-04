@@ -1,6 +1,7 @@
 import { bag } from "../index";
 import "mocha";
 import * as chai from "chai";
+import * as iterable from "iterable-ts";
 
 chai.should();
 
@@ -31,7 +32,7 @@ describe("namespace bag", function() {
     describe("class Bag", function() {
         it("flatMap()", () => {
             const i = bag.input<number>();
-            const f = (x: number) => [x, x * 2, x * 3];
+            const f = (x: number) => iterable.sequence([x, x * 2, x * 3]);
             check(i.flatMap(f), {
                 flatMap: <I>(x: bag.FlatMap<number, I>) => {
                     x.should.deep.equal(new bag.FlatMap(i, f));
@@ -60,7 +61,7 @@ describe("namespace bag", function() {
         it("product()", () => {
             const a = bag.one(3);
             const b = bag.one("Hello world!");
-            const f = (x: number, y: string) => [{ a: x, b: y }];
+            const f = (x: number, y: string) => iterable.sequence([{ a: x, b: y }]);
             check(a.product(b, f), {
                 product: (x: bag.Product<{ a: number, b: string }, number, string>) => {
                     x.should.deep.equal(new bag.Product(a, b, f));

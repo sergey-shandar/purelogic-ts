@@ -28,7 +28,7 @@ export namespace bag {
     export class FlatMap<T, I> {
         constructor(
             public readonly input: Bag<I>,
-            public readonly func: iterable.FlatMapFunc<I, T>) {}
+            public readonly func: iterable.FlatMapFuncS<I, T>) {}
     }
 
     export class DisjointUnion<T> {
@@ -48,7 +48,7 @@ export namespace bag {
         constructor(
             public readonly a: Bag<A>,
             public readonly b: Bag<B>,
-            public readonly func: iterable.ProductFunc<A, B, T>) {}
+            public readonly func: iterable.ProductFuncS<A, B, T>) {}
     }
 
     export interface Visitor<T, R> {
@@ -110,8 +110,9 @@ export namespace bag {
         /**
          * LINQ: SelectMany
          */
-        flatMap<O>(func: iterable.FlatMapFunc<T, O>): Bag<O> {
-            return new Bag(<R>(visitor: Visitor<O, R>) => visitor.flatMap(new FlatMap(this, func)));
+        flatMap<O>(func: iterable.FlatMapFuncI<T, O>): Bag<O> {
+            return new Bag(<R>(visitor: Visitor<O, R>) =>
+                visitor.flatMap(new FlatMap(this, iterable.flatMapFuncS(func))));
         }
 
         disjointUnion(b: Bag<T>): Bag<T> {
@@ -127,9 +128,9 @@ export namespace bag {
                 visitor.groupBy(new GroupBy(this, toKey, reduce)));
         }
 
-        product<B, O>(b: Bag<B>, func: iterable.ProductFunc<T, B, O>): Bag<O> {
+        product<B, O>(b: Bag<B>, func: iterable.ProductFuncI<T, B, O>): Bag<O> {
             return new Bag(<R>(visitor: Visitor<O, R>) =>
-                visitor.product(new Product(this, b, func)));
+                visitor.product(new Product(this, b, iterable.productFuncS(func))));
         }
 
         /**
@@ -210,7 +211,7 @@ export namespace optimized {
         input(): R;
         one(value: T): R;
         groupBy(inputs: Bag<T>, toKey: iterable.KeyFunc<T>, reduce: iterable.ReduceFunc<T>): R;
-        product<A, B>(a: Bag<A>, b: Bag<B>, func: iterable.ProductFunc<A, B, T>): R;
+        product<A, B>(a: Bag<A>, b: Bag<B>, func: iterable.ProductFuncS<A, B, T>): R;
     }
 
     export type NodeImplementation<T> = <R>(visitor: NodeVisitor<T, R>) => R;
@@ -221,20 +222,21 @@ export namespace optimized {
             public readonly id: string,
             public readonly implementation: NodeImplementation<T>) {}
 
-        link<O>(func: iterable.FlatMapFunc<T, O>): Link<O> {
+        link<O>(func: iterable.FlatMapFuncS<T, O>): Link<O> {
             const value = new LinkValue(this, func);
             return new Link(<R>(visitor: LinkVisitor<O, R>) => visitor(value));
         }
 
         bag(): Bag<T> {
-            return new Bag(this.id, [this.link(iterable.flatMapIdentity)]);
+            return new Bag(
+                this.id, iterable.array(this.link(iterable.flatMapIdentity)));
         }
     }
 
     export class LinkValue<T, I> {
         constructor(
             public readonly node: Node<I>,
-            readonly func: iterable.FlatMapFunc<I, T>) {}
+            readonly func: iterable.FlatMapFuncS<I, T>) {}
     }
 
     export type LinkVisitor<T, R> = <I>(value: LinkValue<T, I>) => R;
@@ -250,24 +252,22 @@ export namespace optimized {
             return this.implementation(<I>(x: LinkValue<T, I>) => x.node.id);
         }
 
-        flatMap<O>(func: iterable.FlatMapFunc<T, O>): Link<O> {
+        flatMap<O>(func: iterable.FlatMapFuncS<T, O>): Link<O> {
             function visitor<I>(x: LinkValue<T, I>): Link<O> {
                 const f = x.func;
                 const newFunc = f !== iterable.flatMapIdentity
-                    ? (value: I) => iterable.sequence(f(value))
-                        .flatMap(func)
-                        .toArray()
-                    : <iterable.FlatMapFunc<I, O>> <any> func;
+                    ? (value: I) => f(value).flatMap(func)
+                    : <iterable.FlatMapFuncS<I, O>> <any> func;
                 return x.node.link(newFunc);
             }
             return this.implementation(visitor);
         }
 
-        addFunc(getFunc: <I>() => iterable.FlatMapFunc<I, T>): Link<T> {
+        addFunc(getFunc: <I>() => iterable.FlatMapFuncS<I, T>): Link<T> {
             function visitor<I>(link: LinkValue<T, I>): Link<T> {
                 const f = link.func;
                 const fNew = getFunc<I>();
-                return link.node.link(i => iterable.sequence(f(i)).concat(fNew(i)));
+                return link.node.link(i => f(i).concat(fNew(i)));
             }
             return this.implementation(visitor);
         }
@@ -277,9 +277,9 @@ export namespace optimized {
 
         constructor(
             public readonly id: string,
-            public readonly links: Link<T>[]) {}
+            public readonly links: iterable.Sequence<Link<T>>) {}
 
-        linksMap<R>(visitor: LinkVisitor<T, R>): R[] {
+        linksMap<R>(visitor: LinkVisitor<T, R>): iterable.Sequence<R> {
             return this.links.map(link => link.implementation(visitor));
         }
 
@@ -290,27 +290,27 @@ export namespace optimized {
                 .bag();
         }
 
-        product<B, O>(id: string, b: Bag<B>, func: iterable.ProductFunc<T, B, O>): Bag<O> {
+        product<B, O>(id: string, b: Bag<B>, func: iterable.ProductFuncS<T, B, O>): Bag<O> {
             return new Node(id, <R>(visitor: NodeVisitor<O, R>) => visitor.product(this, b, func))
                 .bag();
         }
 
-        flatMap<O>(id: string, func: iterable.FlatMapFunc<T, O>): Bag<O> {
+        flatMap<O>(id: string, func: iterable.FlatMapFuncS<T, O>): Bag<O> {
             return new Bag(id, this.links.map(link => link.flatMap(func)));
         }
 
         disjointUnion(id: string, b: Bag<T>): Bag<T> {
-            const c = iterable.sequence(this.links).concat(b.links);
+            const c = this.links.concat(b.links);
             const g = c.groupBy(
                 x => x.nodeId(),
                 (x, y) => {
                     function visitor<B>(v: LinkValue<T, B>): Link<T> {
-                        function getFunc<I>(): iterable.FlatMapFunc<I, T> { return <any> v.func; }
+                        function getFunc<I>(): iterable.FlatMapFuncS<I, T> { return <any> v.func; }
                         return x.addFunc(getFunc);
                     }
                     return y.implementation(visitor);
                 });
-            return new Bag(id, iterable.values(g).toArray());
+            return new Bag(id, iterable.values(g));
         }
     }
 
@@ -423,7 +423,7 @@ export class SyncMem extends Mem<iterable.I<any>> {
                 }
 
                 product<A, B>(
-                    a: optimized.Bag<A>, b: optimized.Bag<B>, func: iterable.ProductFunc<A, B, T>
+                    a: optimized.Bag<A>, b: optimized.Bag<B>, func: iterable.ProductFuncS<A, B, T>
                 ): iterable.I<T> {
                     return iterable.sequence(get(a)).product(get(b), func);
                 }
@@ -479,7 +479,7 @@ export class AsyncMem extends Mem<Promise<iterable.I<any>>> {
                 async product<A, B>(
                     a: optimized.Bag<A>,
                     b: optimized.Bag<B>,
-                    func: iterable.ProductFunc<A, B, T>
+                    func: iterable.ProductFuncS<A, B, T>
                 ): Promise<iterable.I<T>> {
                     return iterable.sequence(await get(a)).product(await get(b), func);
                 }
