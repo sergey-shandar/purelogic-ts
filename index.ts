@@ -1,4 +1,4 @@
-import "ts-helpers";
+import "tslib";
 import * as iterable from "iterable-ts";
 
 export class CacheMap<T> {
