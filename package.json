@@ -34,16 +34,16 @@
   ],
   "homepage": "https://github.com/sergey-shandar/purelogic-ts#readme",
   "devDependencies": {
-    "@types/chai": "^3.4.33",
-    "@types/mocha": "^2.2.30",
+    "@types/chai": "^3.4.34",
+    "@types/mocha": "^2.2.39",
     "chai": "^3.5.0",
     "istanbul": "^0.4.5",
-    "mocha": "^3.1.0",
-    "tslint": "^3.15.1",
-    "typescript": "^2.0.3"
+    "mocha": "^3.2.0",
+    "tslint": "^4.4.2",
+    "typescript": "^2.1.5"
   },
   "dependencies": {
     "iterable-ts": "0.0.2",
-    "tslib": "^1.0.0"
+    "tslib": "^1.5.0"
   }
 }
