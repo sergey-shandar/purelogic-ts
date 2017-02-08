@@ -1,5 +1,5 @@
 import "tslib";
-import * as iterable from "iterable-ts";
+import * as _ from "iterable-ts";
 
 export class CacheMap<T> {
 
@@ -28,7 +28,7 @@ export namespace bag {
     export class FlatMap<T, I> {
         constructor(
             public readonly input: Bag<I>,
-            public readonly func: iterable.FlatMapFunc<I, T>) {}
+            public readonly func: _.FlatMapFunc<I, T>) {}
     }
 
     export class DisjointUnion<T> {
@@ -40,15 +40,15 @@ export namespace bag {
     export class GroupBy<T> {
         constructor(
             public readonly input: Bag<T>,
-            public readonly toKey: iterable.KeyFunc<T>,
-            public readonly reduce: iterable.ReduceFunc<T>) {}
+            public readonly toKey: _.KeyFunc<T>,
+            public readonly reduce: _.ReduceFunc<T>) {}
     }
 
     export class Product<T, A, B> {
         constructor(
             public readonly a: Bag<A>,
             public readonly b: Bag<B>,
-            public readonly func: iterable.ProductFunc<A, B, T>) {}
+            public readonly func: _.ProductFunc<A, B, T>) {}
     }
 
     export interface Visitor<T, R> {
@@ -84,7 +84,7 @@ export namespace bag {
     }
 
     export function range(a: number, b: number): Bag<number> {
-        return one(null).flatMap(() => iterable.range(a, b));
+        return one(null).flatMap(() => _.range(a, b));
     }
 
     let bagCounter: number = 0;
@@ -110,7 +110,7 @@ export namespace bag {
         /**
          * LINQ: SelectMany
          */
-        flatMap<O>(func: iterable.FlatMapFunc<T, O>): Bag<O> {
+        flatMap<O>(func: _.FlatMapFunc<T, O>): Bag<O> {
             return new Bag(<R>(visitor: Visitor<O, R>) => visitor.flatMap(new FlatMap(this, func)));
         }
 
@@ -122,12 +122,12 @@ export namespace bag {
         /**
          * LINQ: GroupBy
          */
-        groupBy(toKey: iterable.KeyFunc<T>, reduce: iterable.ReduceFunc<T>): Bag<T> {
+        groupBy(toKey: _.KeyFunc<T>, reduce: _.ReduceFunc<T>): Bag<T> {
             return new Bag(<R>(visitor: Visitor<T, R>) =>
                 visitor.groupBy(new GroupBy(this, toKey, reduce)));
         }
 
-        product<B, O>(b: Bag<B>, func: iterable.ProductFunc<T, B, O>): Bag<O> {
+        product<B, O>(b: Bag<B>, func: _.ProductFunc<T, B, O>): Bag<O> {
             return new Bag(<R>(visitor: Visitor<O, R>) =>
                 visitor.product(new Product(this, b, func)));
         }
@@ -135,15 +135,15 @@ export namespace bag {
         /**
          * LINQ: Select
          */
-        map<O>(func: iterable.MapFunc<T, O>): Bag<O> {
+        map<O>(func: _.MapFunc<T, O>): Bag<O> {
             return this.flatMap(value => [func(value)]);
         }
 
         /**
          * LINQ: Where
          */
-        filter(func: iterable.FilterFunc<T>): Bag<T> {
-            return this.flatMap(iterable.filterFuncToFlatMapFunc(func));
+        filter(func: _.FilterFunc<T>): Bag<T> {
+            return this.flatMap(_.filterFuncToFlatMapFunc(func));
         }
 
         compact(): Bag<T> {
@@ -153,7 +153,7 @@ export namespace bag {
         /**
          * LINQ: Accumulate
          */
-        reduce(func: iterable.ReduceFunc<T>): Bag<T> {
+        reduce(func: _.ReduceFunc<T>): Bag<T> {
             return this.groupBy(() => "", func);
         }
 
@@ -169,10 +169,10 @@ export namespace bag {
 
         join<B>(
             b: Bag<B>,
-            keyT: iterable.KeyFunc<T>,
-            keyB: iterable.KeyFunc<B>,
-            reduceT: iterable.ReduceFunc<T>,
-            reduceB: iterable.ReduceFunc<B>
+            keyT: _.KeyFunc<T>,
+            keyB: _.KeyFunc<B>,
+            reduceT: _.ReduceFunc<T>,
+            reduceB: _.ReduceFunc<B>
         ): Bag<Join<T, B>> {
 
             function join(k: string, t: T|undefined, b: B|undefined) {
@@ -183,7 +183,7 @@ export namespace bag {
             const bagB = b.map(x => join(keyB(x), undefined, x));
             const bagC = bagT.disjointUnion(bagB);
 
-            function reduceOptional<M>(reduce: iterable.ReduceFunc<M>) {
+            function reduceOptional<M>(reduce: _.ReduceFunc<M>) {
                 return (x: M|undefined, y: M|undefined) => {
                     if (x === undefined) { return y; }
                     if (y === undefined) { return x; }
@@ -209,8 +209,8 @@ export namespace optimized {
     export interface NodeVisitor<T, R> {
         input(): R;
         one(value: T): R;
-        groupBy(inputs: Bag<T>, toKey: iterable.KeyFunc<T>, reduce: iterable.ReduceFunc<T>): R;
-        product<A, B>(a: Bag<A>, b: Bag<B>, func: iterable.ProductFunc<A, B, T>): R;
+        groupBy(inputs: Bag<T>, toKey: _.KeyFunc<T>, reduce: _.ReduceFunc<T>): R;
+        product<A, B>(a: Bag<A>, b: Bag<B>, func: _.ProductFunc<A, B, T>): R;
     }
 
     export type NodeImplementation<T> = <R>(visitor: NodeVisitor<T, R>) => R;
@@ -221,20 +221,20 @@ export namespace optimized {
             public readonly id: string,
             public readonly implementation: NodeImplementation<T>) {}
 
-        link<O>(func: iterable.FlatMapFunc<T, O>): Link<O> {
+        link<O>(func: _.FlatMapFunc<T, O>): Link<O> {
             const value = new LinkValue(this, func);
             return new Link(<R>(visitor: LinkVisitor<O, R>) => visitor(value));
         }
 
         bag(): Bag<T> {
-            return new Bag(this.id, [this.link(iterable.flatMapIdentity)]);
+            return new Bag(this.id, [this.link(_.flatMapIdentity)]);
         }
     }
 
     export class LinkValue<T, I> {
         constructor(
             public readonly node: Node<I>,
-            public readonly func: iterable.FlatMapFunc<I, T>) {}
+            public readonly func: _.FlatMapFunc<I, T>) {}
     }
 
     export type LinkVisitor<T, R> = <I>(value: LinkValue<T, I>) => R;
@@ -250,22 +250,22 @@ export namespace optimized {
             return this.implementation(<I>(x: LinkValue<T, I>) => x.node.id);
         }
 
-        flatMap<O>(func: iterable.FlatMapFunc<T, O>): Link<O> {
+        flatMap<O>(func: _.FlatMapFunc<T, O>): Link<O> {
             function visitor<I>(x: LinkValue<T, I>): Link<O> {
                 const f = x.func;
-                const newFunc = f !== iterable.flatMapIdentity
-                    ? (value: I) => iterable.toArray(iterable.flatMap(f(value), func))
-                    : <iterable.FlatMapFunc<I, O>> <any> func;
+                const newFunc = f !== _.flatMapIdentity
+                    ? (value: I) => _.toArray(_.flatMap(f(value), func))
+                    : <_.FlatMapFunc<I, O>> <any> func;
                 return x.node.link(newFunc);
             }
             return this.implementation(visitor);
         }
 
-        addFunc(getFunc: <I>() => iterable.FlatMapFunc<I, T>): Link<T> {
+        addFunc(getFunc: <I>() => _.FlatMapFunc<I, T>): Link<T> {
             function visitor<I>(link: LinkValue<T, I>): Link<T> {
                 const f = link.func;
                 const fNew = getFunc<I>();
-                return link.node.link(i => iterable.concat(f(i), fNew(i)));
+                return link.node.link(i => _.concat(f(i), fNew(i)));
             }
             return this.implementation(visitor);
         }
@@ -281,35 +281,35 @@ export namespace optimized {
             return this.links.map(link => link.implementation(visitor));
         }
 
-        groupBy(id: string, toKey: iterable.KeyFunc<T>, reduce: iterable.ReduceFunc<T>): Bag<T> {
+        groupBy(id: string, toKey: _.KeyFunc<T>, reduce: _.ReduceFunc<T>): Bag<T> {
             return new Node(
                     id,
                     <R>(visitor: NodeVisitor<T, R>) => visitor.groupBy(this, toKey, reduce))
                 .bag();
         }
 
-        product<B, O>(id: string, b: Bag<B>, func: iterable.ProductFunc<T, B, O>): Bag<O> {
+        product<B, O>(id: string, b: Bag<B>, func: _.ProductFunc<T, B, O>): Bag<O> {
             return new Node(id, <R>(visitor: NodeVisitor<O, R>) => visitor.product(this, b, func))
                 .bag();
         }
 
-        flatMap<O>(id: string, func: iterable.FlatMapFunc<T, O>): Bag<O> {
+        flatMap<O>(id: string, func: _.FlatMapFunc<T, O>): Bag<O> {
             return new Bag(id, this.links.map(link => link.flatMap(func)));
         }
 
         disjointUnion(id: string, b: Bag<T>): Bag<T> {
-            const c = iterable.concat(this.links, b.links);
-            const g = iterable.groupBy(
+            const c = _.concat(this.links, b.links);
+            const g = _.groupBy(
                 c,
                 x => x.nodeId(),
                 (x, y) => {
                     function visitor<B>(v: LinkValue<T, B>): Link<T> {
-                        function getFunc<I>(): iterable.FlatMapFunc<I, T> { return <any> v.func; }
+                        function getFunc<I>(): _.FlatMapFunc<I, T> { return <any> v.func; }
                         return x.addFunc(getFunc);
                     }
                     return y.implementation(visitor);
                 });
-            return new Bag(id, iterable.toArray(iterable.values(g)));
+            return new Bag(id, _.toArray(_.values(g)));
         }
     }
 
@@ -374,55 +374,55 @@ export abstract class Mem<T> {
 /**
  * Synchronous memory back-end.
  */
-export class SyncMem extends Mem<iterable.I<any>> {
+export class SyncMem extends Mem<_.I<any>> {
 
-    set<T>(input: bag.Bag<T>, factory: iterable.I<T>): void {
+    set<T>(input: bag.Bag<T>, factory: _.I<T>): void {
         this._map.set(input.id, factory);
     }
 
-    get<T>(b: bag.Bag<T>): iterable.I<T> {
+    get<T>(b: bag.Bag<T>): _.I<T> {
         return this._get(this._dag.get(b));
     }
 
-    private _get<T>(o: optimized.Bag<T>): iterable.I<T> {
+    private _get<T>(o: optimized.Bag<T>): _.I<T> {
         const id = o.id;
         return this._map.get(id, () => {
             // NOTE: possible optimization:
             // if (value.func === flatMap.identity) { return nodeFunc; }
             const links = o.linksMap(<I>(value: optimized.LinkValue<T, I>) =>
-                iterable.flatMap(this._fromNode(value.node), value.func));
+                _.flatMap(this._fromNode(value.node), value.func));
             // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
-            return iterable.flatten(links);
+            return _.flatten(links);
         });
     }
 
-    private _fromNode<T>(n: optimized.Node<T>): iterable.I<T> {
+    private _fromNode<T>(n: optimized.Node<T>): _.I<T> {
         const id = n.id;
         const map = this._map;
         return map.get(id, () => {
             const get = <I>(b: optimized.Bag<I>) => this._get(b);
 
-            class Visitor implements optimized.NodeVisitor<T, iterable.I<T>> {
+            class Visitor implements optimized.NodeVisitor<T, _.I<T>> {
 
                 /**
                  * when input is not defined yet.
                  */
                 input(): never { throw new InputError(id); }
 
-                one(value: T): iterable.I<T> { return [value]; }
+                one(value: T): _.I<T> { return [value]; }
 
                 groupBy(
                     input: optimized.Bag<T>,
-                    toKey: iterable.KeyFunc<T>,
-                    reduce: iterable.ReduceFunc<T>
-                ): iterable.I<T> {
-                    return iterable.values(iterable.groupBy(get(input), toKey, reduce));
+                    toKey: _.KeyFunc<T>,
+                    reduce: _.ReduceFunc<T>
+                ): _.I<T> {
+                    return _.values(_.groupBy(get(input), toKey, reduce));
                 }
 
                 product<A, B>(
-                    a: optimized.Bag<A>, b: optimized.Bag<B>, func: iterable.ProductFunc<A, B, T>
-                ): iterable.I<T> {
-                    return iterable.product(get(a), get(b), func);
+                    a: optimized.Bag<A>, b: optimized.Bag<B>, func: _.ProductFunc<A, B, T>
+                ): _.I<T> {
+                    return _.product(get(a), get(b), func);
                 }
             }
             return n.implementation(new Visitor());
@@ -430,55 +430,55 @@ export class SyncMem extends Mem<iterable.I<any>> {
     }
 }
 
-export class AsyncMem extends Mem<Promise<iterable.I<any>>> {
+export class AsyncMem extends Mem<Promise<_.I<any>>> {
 
-    set<T>(input: bag.Bag<T>, getArray: Promise<iterable.I<T>>): void {
+    set<T>(input: bag.Bag<T>, getArray: Promise<_.I<T>>): void {
         this._map.set(input.id, getArray);
     }
 
-    get<T>(b: bag.Bag<T>): Promise<iterable.I<T>> {
+    get<T>(b: bag.Bag<T>): Promise<_.I<T>> {
         return this._get(this._dag.get(b));
     }
 
-    private _get<T>(o: optimized.Bag<T>): Promise<iterable.I<T>> {
+    private _get<T>(o: optimized.Bag<T>): Promise<_.I<T>> {
         const id = o.id;
         return this._map.get(id, async () => {
             // NOTE: possible optimization:
             // if (value.func === flatMap.identity) { return nodeFunc; }
             const linkPromises = o.linksMap(async <I>(value: optimized.LinkValue<T, I>) =>
-                iterable.flatMap(await this._fromNode(value.node), value.func));
+                _.flatMap(await this._fromNode(value.node), value.func));
             // NOTE: possible optimization: if (links.lenght === 1) { newResult = links[0]; }
-            return iterable.flatten(await Promise.all(linkPromises));
+            return _.flatten(await Promise.all(linkPromises));
         });
     }
 
-    private _fromNode<T>(n: optimized.Node<T>): Promise<iterable.I<T>> {
+    private _fromNode<T>(n: optimized.Node<T>): Promise<_.I<T>> {
         const id = n.id;
         const map = this._map;
         return map.get(id, () => {
             const get = <I>(b: optimized.Bag<I>) => this._get(b);
 
-            class Visitor implements optimized.NodeVisitor<T, Promise<iterable.I<T>>> {
+            class Visitor implements optimized.NodeVisitor<T, Promise<_.I<T>>> {
 
-                input(): Promise<iterable.I<T>> { return Promise.reject(new InputError(id)); }
+                input(): Promise<_.I<T>> { return Promise.reject(new InputError(id)); }
 
-                async one(value: T): Promise<iterable.I<T>> { return [value]; }
+                async one(value: T): Promise<_.I<T>> { return [value]; }
 
                 async groupBy(
                     input: optimized.Bag<T>,
-                    toKey: iterable.KeyFunc<T>,
-                    reduce: iterable.ReduceFunc<T>
-                ): Promise<iterable.I<T>> {
+                    toKey: _.KeyFunc<T>,
+                    reduce: _.ReduceFunc<T>
+                ): Promise<_.I<T>> {
                     const i = await get(input);
-                    return iterable.values(await iterable.async.groupBy(i, toKey, reduce));
+                    return _.values(await _.async.groupBy(i, toKey, reduce));
                 }
 
                 async product<A, B>(
                     a: optimized.Bag<A>,
                     b: optimized.Bag<B>,
-                    func: iterable.ProductFunc<A, B, T>
-                ): Promise<iterable.I<T>> {
-                    return iterable.product(await get(a), await get(b), func);
+                    func: _.ProductFunc<A, B, T>
+                ): Promise<_.I<T>> {
+                    return _.product(await get(a), await get(b), func);
                 }
             }
             return n.implementation(new Visitor());
